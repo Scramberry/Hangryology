@@ -22,16 +22,27 @@ function cuisineFor(tags){const raw=[tags.cuisine||'',tags.name||'',tags['name:e
 function hasFries(name){return chainFries.some(c=>name.toLowerCase().includes(c))}
 function address(t){return [t['addr:housenumber'],t['addr:street'],t['addr:city']].filter(Boolean).join(' ')||'Address not listed — open directions'}
 async function search(){show('loading');$('#loading-text').textContent='Finding real restaurants near your location…';try{let point=geo;if($('#zip').value.trim()){const zip=$('#zip').value.trim();const res=await timedFetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`,{},9000);if(!res.ok)throw Error('ZIP code not found. Please check the ZIP and try again.');const data=await res.json();point={lat:+data.places[0].latitude,lon:+data.places[0].longitude,label:`${data.places[0]['place name']}, ${data.places[0]['state abbreviation']}`}}if(!point)throw Error('Enter a ZIP code or share your location.');const miles=+$('#radius').value,meters=Math.round(miles*1609.344);$('#loading-text').textContent=`Searching within ${miles} miles of ${point.label}…`;
-const query=`[out:json][timeout:35];(nwr["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
-let data;let lastError;
-const endpoints=['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter'];
-for(const endpoint of endpoints){try{
-  $('#loading-text').textContent='Checking nearby food spots…';
-  const response=await timedFetch(endpoint,{method:'POST',body:new URLSearchParams({data:query})},12500);
-  if(!response.ok)throw Error('Restaurant service busy');
-  data=await response.json();break;
-}catch(e){lastError=e;}}
-if(!data)throw Error('Restaurant data is taking too long. Try a smaller radius or retry in a minute.');
+const query=`[out:json][timeout:25];(nwr["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
+let data;const failures=[];
+// Try independent public Overpass instances. These services can be busy or rate limited.
+const endpoints=[
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.nchc.org.tw/api/interpreter'
+];
+for(let i=0;i<endpoints.length;i++){
+  const endpoint=endpoints[i];
+  try{
+    $('#loading-text').textContent=`Checking nearby food spots… (server ${i+1} of ${endpoints.length})`;
+    const response=await timedFetch(endpoint,{method:'POST',body:new URLSearchParams({data:query})},30000);
+    if(!response.ok)throw Error(`HTTP ${response.status}`);
+    const result=await response.json();
+    if(!Array.isArray(result.elements))throw Error('Invalid restaurant data');
+    data=result;break;
+  }catch(e){failures.push(`${new URL(endpoint).hostname}: ${e.name==='AbortError'?'timed out':e.message}`);}
+}
+if(!data)throw Error('Restaurant servers are unavailable right now. Your ZIP code and radius are not the problem. Please try again shortly. Details: '+failures.join(' | '));
 const seen=new Set();restaurants=data.elements.map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!excluded.has(r.type)&&!excluded2.has(r.type)});
 if(mode==='quiz'||mode==='date'){const fries=chosen('fries'),vibe=chosen('vibe');if(fries==='yes')restaurants=restaurants.filter(r=>hasFries(r.name));if(fries==='no')restaurants=restaurants.filter(r=>!hasFries(r.name));if(vibe==='fast')restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food');if(vibe==='sit')restaurants=restaurants.filter(r=>r.tags.amenity==='restaurant')}
 restaurants.sort((a,b)=>a.miles-b.miles);if(+$('#hangry-range').value>=4)restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);if(!restaurants.length)throw Error('No matching restaurants were found. Try a larger radius, fewer exclusions, or relax the fries preference.');restaurants=restaurants.slice(0,80);prepareWheel();show(['browse','quiz','date'].includes(mode)?'all':'wheel-screen')}catch(e){show('search-error');$('#error-message').textContent=e.message||'Could not load restaurants. Please try again.'}}
