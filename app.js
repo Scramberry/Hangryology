@@ -21,31 +21,96 @@ function haversine(a,b,c,d){const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,z=Math.sin(x
 function cuisineFor(tags){const raw=[tags.cuisine||'',tags.name||'',tags['name:en']||'',tags.amenity||''].join(' ').toLowerCase();if(tags.amenity==='fast_food')return 'fast_food';for(const [,,id] of categories){const words={burger:['burger','hamburger'],mexican:['mexican','taco','burrito'],chicken:['chicken','wings'],steak:['steak','steakhouse'],sandwich:['sandwich','sub'],salad:['salad','healthy'],breakfast:['breakfast','brunch','pancake'],seafood:['seafood','fish'],sushi:['sushi','japanese'],chinese:['chinese'],pizza:['pizza'],italian:['italian','pasta'],indian:['indian'],thai:['thai']}[id]||[];if(words.some(w=>raw.includes(w)))return id}return 'other'}
 function hasFries(name){return chainFries.some(c=>name.toLowerCase().includes(c))}
 function address(t){return [t['addr:housenumber'],t['addr:street'],t['addr:city']].filter(Boolean).join(' ')||'Address not listed — open directions'}
-async function search(){show('loading');$('#loading-text').textContent='Finding real restaurants near your location…';try{let point=geo;if($('#zip').value.trim()){const zip=$('#zip').value.trim();const res=await timedFetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`,{},9000);if(!res.ok)throw Error('ZIP code not found. Please check the ZIP and try again.');const data=await res.json();point={lat:+data.places[0].latitude,lon:+data.places[0].longitude,label:`${data.places[0]['place name']}, ${data.places[0]['state abbreviation']}`}}if(!point)throw Error('Enter a ZIP code or share your location.');const miles=+$('#radius').value,meters=Math.round(miles*1609.344);$('#loading-text').textContent=`Searching within ${miles} miles of ${point.label}…`;
-const query=`[out:json][timeout:25];(nwr["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
-let data;const failures=[];
-// Try independent public Overpass instances. These services can be busy or rate limited.
-const endpoints=[
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.nchc.org.tw/api/interpreter'
-];
-for(let i=0;i<endpoints.length;i++){
-  const endpoint=endpoints[i];
-  try{
-    $('#loading-text').textContent=`Checking nearby food spots… (server ${i+1} of ${endpoints.length})`;
-    const response=await timedFetch(endpoint,{method:'POST',body:new URLSearchParams({data:query})},30000);
-    if(!response.ok)throw Error(`HTTP ${response.status}`);
-    const result=await response.json();
-    if(!Array.isArray(result.elements))throw Error('Invalid restaurant data');
-    data=result;break;
-  }catch(e){failures.push(`${new URL(endpoint).hostname}: ${e.name==='AbortError'?'timed out':e.message}`);}
+// One shared search pipeline for Find Food, Spin the Wheel, Browse and Two Player.
+// Public OSM services are best-effort; cache results locally to reduce repeat requests.
+const OSM_ENDPOINTS=['https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass-api.de/api/interpreter'];
+const CACHE_TTL=24*60*60*1000;
+const CACHE_PREFIX='hangryology-osm-v112:';
+function readCache(key){try{const item=JSON.parse(localStorage.getItem(CACHE_PREFIX+key)||'null');return item&&Array.isArray(item.elements)?item:null}catch{return null}}
+function writeCache(key,elements){try{localStorage.setItem(CACHE_PREFIX+key,JSON.stringify({saved:Date.now(),elements}));}catch{/* Browser storage may be full or disabled. */}}
+function osmQuery(point,meters,kind='nodes'){
+  // Node-only requests are substantially lighter than nwr + out center tags.
+  const selector=kind==='nodes'?'node':'(way;relation)';
+  if(kind==='nodes')return `[out:json][timeout:18];node["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon});out body;`;
+  return `[out:json][timeout:18];(way["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon});relation["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
 }
-if(!data)throw Error('Restaurant servers are unavailable right now. Your ZIP code and radius are not the problem. Please try again shortly. Details: '+failures.join(' | '));
-const seen=new Set();restaurants=data.elements.map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!excluded.has(r.type)&&!excluded2.has(r.type)});
-if(mode==='quiz'||mode==='date'){const fries=chosen('fries'),vibe=chosen('vibe');if(fries==='yes')restaurants=restaurants.filter(r=>hasFries(r.name));if(fries==='no')restaurants=restaurants.filter(r=>!hasFries(r.name));if(vibe==='fast')restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food');if(vibe==='sit')restaurants=restaurants.filter(r=>r.tags.amenity==='restaurant')}
-restaurants.sort((a,b)=>a.miles-b.miles);if(+$('#hangry-range').value>=4)restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);if(!restaurants.length)throw Error('No matching restaurants were found. Try a larger radius, fewer exclusions, or relax the fries preference.');restaurants=restaurants.slice(0,80);prepareWheel();show(['browse','quiz','date'].includes(mode)?'all':'wheel-screen')}catch(e){show('search-error');$('#error-message').textContent=e.message||'Could not load restaurants. Please try again.'}}
+async function requestOSM(endpoint,query,ms=20000){
+ const body=new URLSearchParams({data:query});
+ const response=await timedFetch(endpoint,{method:'POST',body,headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}},ms);
+ if(!response.ok)throw Error(`HTTP ${response.status}`);
+ const result=await response.json();
+ if(!Array.isArray(result.elements))throw Error('Invalid response');
+ return result.elements;
+}
+async function fetchOSM(point,meters){
+ const key=`${point.lat.toFixed(3)}:${point.lon.toFixed(3)}:${meters}`;
+ const cached=readCache(key);
+ if(cached&&Date.now()-cached.saved<CACHE_TTL)return {elements:cached.elements,fromCache:true};
+ const errors=[];
+ // Query two different hosts concurrently, instead of waiting 30 seconds per host.
+ // Resolve on the first successful response; never confuse a valid empty result with an error.
+ async function firstSuccess(query){
+  const attempts=OSM_ENDPOINTS.slice(0,2).map(async host=>{
+    try{return await requestOSM(host,query)}catch(e){errors.push(`${new URL(host).hostname}: ${e.name==='AbortError'?'timeout':e.message}`);throw e}
+  });
+  try{return await Promise.any(attempts)}catch{
+    try{return await requestOSM(OSM_ENDPOINTS[2],query)}catch(e){errors.push(`overpass-api.de: ${e.name==='AbortError'?'timeout':e.message}`);throw Error('Restaurant data servers could not complete the search.')}
+  }
+ }
+ $('#loading-text').textContent='Checking nearby restaurant listings…';
+ try{
+  let elements=await firstSuccess(osmQuery(point,meters));
+  // If nodes are absent, make one attempt for businesses mapped as buildings.
+  if(elements.length===0){$('#loading-text').textContent='Checking additional restaurant listings…';elements=await firstSuccess(osmQuery(point,meters,'ways'))}
+  writeCache(key,elements);return {elements,fromCache:false};
+ }catch(e){
+  if(cached){return {elements:cached.elements,fromCache:true,stale:true}}
+  throw Error('Live restaurant data is unavailable. This is a public map-data service issue, not your ZIP code. Please retry in a few minutes. '+errors.join(' | '));
+ }
+}
+let searchBusy=false;
+async function search(){
+ if(searchBusy)return;
+ searchBusy=true;
+ show('loading');$('#loading-text').textContent='Locating your food laboratory…';
+ try{
+  let point=geo;
+  if($('#zip').value.trim()){
+   const zip=$('#zip').value.trim();
+   if(!/^\d{5}$/.test(zip))throw Error('Enter a valid five-digit ZIP code.');
+   const zipKey='hangryology-zip:'+zip;
+   try{
+    const res=await timedFetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`,{},9000);
+    if(!res.ok)throw Error('ZIP code not found.');
+    const data=await res.json();
+    point={lat:+data.places[0].latitude,lon:+data.places[0].longitude,label:`${data.places[0]['place name']}, ${data.places[0]['state abbreviation']}`};
+    try{localStorage.setItem(zipKey,JSON.stringify(point))}catch{}
+   }catch(e){try{point=JSON.parse(localStorage.getItem(zipKey)||'null')}catch{}if(!point)throw Error('ZIP lookup is unavailable. Please try again or use your location. '+e.message)}
+  }
+  if(!point)throw Error('Enter a ZIP code or share your location.');
+  const miles=+$('#radius').value,meters=Math.round(miles*1609.344);
+  $('#loading-text').textContent=`Searching within ${miles} miles of ${point.label}…`;
+  const result=await fetchOSM(point,meters);
+  const seen=new Set();
+  restaurants=result.elements.map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}})
+   .filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!excluded.has(r.type)&&!excluded2.has(r.type)});
+  if(mode==='quiz'||mode==='date'){
+   const fries=chosen('fries'),vibe=chosen('vibe');
+   if(fries==='yes')restaurants=restaurants.filter(r=>hasFries(r.name));
+   if(fries==='no')restaurants=restaurants.filter(r=>!hasFries(r.name));
+   if(vibe==='fast')restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food');
+   if(vibe==='sit')restaurants=restaurants.filter(r=>r.tags.amenity==='restaurant');
+  }
+  restaurants.sort((a,b)=>a.miles-b.miles);
+  if(+$('#hangry-range').value>=4)restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);
+  if(!restaurants.length)throw Error('No matching restaurants were found in the available map data. Try fewer exclusions, a wider radius, or a different dining preference.');
+  restaurants=restaurants.slice(0,80);
+  prepareWheel();
+  if(result.fromCache)$('#match-note').textContent+=' • Saved map results';
+  show(['browse','quiz','date'].includes(mode)?'all':'wheel-screen');
+ }catch(e){show('search-error');$('#error-message').textContent=e.message||'Could not load restaurants. Please try again.'}
+ finally{searchBusy=false}
+}
 let wheelItems=[];const colors=['#e65a31','#144e73','#c23750','#f0a53a','#147e79','#754bb5','#c64a27','#2e6090'];
 function prepareWheel(){wheelItems=[...restaurants].sort(()=>Math.random()-.5).slice(0,Math.min(8,restaurants.length));$('#match-title').textContent=`${restaurants.length} restaurants match!`;$('#match-note').textContent=`${wheelItems.length} randomly selected for the wheel • Browse all ${restaurants.length} below`;$('#all-count').textContent=`${restaurants.length} nearby matches`; rotation=0;drawWheel();renderPlaces('#contenders',wheelItems);renderPlaces('#all-list',restaurants)}
 function drawWheel(){const c=$('#wheel'),ctx=c.getContext('2d'),n=wheelItems.length;if(!n)return;const cx=320,cy=320,r=290;ctx.clearRect(0,0,640,640);ctx.save();ctx.translate(cx,cy);ctx.rotate(rotation);for(let i=0;i<n;i++){const a=-Math.PI/2+i*2*Math.PI/n,b=a+2*Math.PI/n;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,a,b);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();ctx.strokeStyle='#ffd37c';ctx.lineWidth=3;ctx.stroke();ctx.save();ctx.rotate(a+Math.PI/n);ctx.translate(r*.65,0);ctx.rotate(Math.PI/2);ctx.fillStyle='#fff';ctx.font='bold 22px system-ui';ctx.textAlign='center';ctx.shadowColor='#000';ctx.shadowBlur=4;let name=wheelItems[i].name;while(ctx.measureText(name).width>160&&name.length>5)name=name.slice(0,-2)+'…';ctx.fillText(name,0,7);ctx.restore()}ctx.beginPath();ctx.arc(0,0,r+7,0,Math.PI*2);ctx.strokeStyle='#ffbe57';ctx.lineWidth=15;ctx.shadowColor='#ff9c31';ctx.shadowBlur=24;ctx.stroke();ctx.restore()}
