@@ -16,25 +16,81 @@ const chosen=id=>$('#'+id+' .selected')?.dataset.value||'any';
 $('#continue').addEventListener('click',()=>{if(!/^\d{5}$/.test($('#zip').value.trim())&&!geo){alert('Please enter a valid 5-digit US ZIP code or use your location.');return}if(mode==='spin'||mode==='browse'||+$('#hangry-range').value>=5)search();else show('quiz')});
 $('#find').addEventListener('click',search);
 $('#locate').addEventListener('click',()=>{if(!navigator.geolocation){alert('Location is not supported on this device.');return}navigator.geolocation.getCurrentPosition(p=>{geo={lat:p.coords.latitude,lon:p.coords.longitude,label:'Your location'};$('#zip').value='';alert('Location ready!')},()=>alert('Location permission was unavailable. You can enter a ZIP code instead.'),{timeout:12000})});
-async function timedFetch(url,opts={},ms=12000){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),ms);try{return await fetch(url,{...opts,signal:controller.signal})}finally{clearTimeout(timer)}}
 function haversine(a,b,c,d){const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,z=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z))}
 function cuisineFor(tags){const raw=[tags.cuisine||'',tags.name||'',tags['name:en']||'',tags.amenity||''].join(' ').toLowerCase();if(tags.amenity==='fast_food')return 'fast_food';for(const [,,id] of categories){const words={burger:['burger','hamburger'],mexican:['mexican','taco','burrito'],chicken:['chicken','wings'],steak:['steak','steakhouse'],sandwich:['sandwich','sub'],salad:['salad','healthy'],breakfast:['breakfast','brunch','pancake'],seafood:['seafood','fish'],sushi:['sushi','japanese'],chinese:['chinese'],pizza:['pizza'],italian:['italian','pasta'],indian:['indian'],thai:['thai']}[id]||[];if(words.some(w=>raw.includes(w)))return id}return 'other'}
 function hasFries(name){return chainFries.some(c=>name.toLowerCase().includes(c))}
 function address(t){return [t['addr:housenumber'],t['addr:street'],t['addr:city']].filter(Boolean).join(' ')||'Address not listed — open directions'}
-async function search(){show('loading');$('#loading-text').textContent='Finding real restaurants near your location…';try{let point=geo;if($('#zip').value.trim()){const zip=$('#zip').value.trim();const res=await fetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`);if(!res.ok)throw Error('ZIP code not found. Please check the ZIP and try again.');const data=await res.json();point={lat:+data.places[0].latitude,lon:+data.places[0].longitude,label:`${data.places[0]['place name']}, ${data.places[0]['state abbreviation']}`}}if(!point)throw Error('Enter a ZIP code or share your location.');const miles=+$('#radius').value,meters=Math.round(miles*1609.344);$('#loading-text').textContent=`Searching within ${miles} miles of ${point.label}…`;
-const query=`[out:json][timeout:35];(nwr["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
-let data;let lastError;
-const endpoints=['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter'];
-for(const endpoint of endpoints){try{
-  $('#loading-text').textContent='Checking nearby food spots…';
-  const response=await fetch(endpoint,{method:'POST',body:new URLSearchParams({data:query})});
-  if(!response.ok)throw Error('Restaurant service busy');
-  data=await response.json();break;
-}catch(e){lastError=e;}}
-if(!data)throw Error('Restaurant services did not respond. Please retry later.');
-const seen=new Set();restaurants=data.elements.map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!excluded.has(r.type)&&!excluded2.has(r.type)});
-if(mode==='quiz'||mode==='date'){const fries=chosen('fries'),vibe=chosen('vibe');if(fries==='yes')restaurants=restaurants.filter(r=>hasFries(r.name));if(fries==='no')restaurants=restaurants.filter(r=>!hasFries(r.name));if(vibe==='fast')restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food');if(vibe==='sit')restaurants=restaurants.filter(r=>r.tags.amenity==='restaurant')}
-restaurants.sort((a,b)=>a.miles-b.miles);if(+$('#hangry-range').value>=4)restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);if(!restaurants.length)throw Error('No matching restaurants were found. Try a larger radius, fewer exclusions, or relax the fries preference.');restaurants=restaurants.slice(0,80);rejected.clear();locked.clear();rejectionHistory=[];prepareWheel();show(['browse','quiz','date'].includes(mode)?'all':'wheel-screen')}catch(e){show('search-error');$('#error-message').textContent=e.message||'Could not load restaurants. Please try again.'}}
+const SEARCH_CACHE_KEY='hangryology_search_cache_v130';
+let searchGeneration=0;
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+function cacheRead(key){try{const obj=JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY)||'{}');return obj[key]?.elements?.length?obj[key]:null}catch{return null}}
+function cacheWrite(key,elements){try{let obj=JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY)||'{}');obj[key]={saved:Date.now(),elements};const keys=Object.keys(obj).sort((a,b)=>obj[b].saved-obj[a].saved).slice(0,8);obj=Object.fromEntries(keys.map(k=>[k,obj[k]]));localStorage.setItem(SEARCH_CACHE_KEY,JSON.stringify(obj))}catch(e){console.warn('Restaurant cache unavailable:',e)}}
+function progress(message){const el=$('#loading-text');if(el)el.textContent=message}
+function getRestaurantsFromData(data,point,miles){
+ const seen=new Set();return (data.elements||[]).map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!excluded.has(r.type)&&!excluded2.has(r.type)});
+}
+function presentResults(data,point,miles){
+ restaurants=getRestaurantsFromData(data,point,miles);
+ if(mode==='quiz'||mode==='date'){
+  const fries=chosen('fries'),vibe=chosen('vibe');
+  if(fries==='yes')restaurants=restaurants.filter(r=>hasFries(r.name));
+  if(fries==='no')restaurants=restaurants.filter(r=>!hasFries(r.name));
+  if(vibe==='fast')restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food');
+  if(vibe==='sit')restaurants=restaurants.filter(r=>r.tags.amenity==='restaurant');
+ }
+ restaurants.sort((a,b)=>a.miles-b.miles);
+ if(+$('#hangry-range').value>=4)restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);
+ if(!restaurants.length){show('search-error');$('#error-message').textContent='The search returned restaurants, but none matched your current filters. Try fewer exclusions or a different preference.';return}
+ restaurants=restaurants.slice(0,80);rejected.clear();locked.clear();rejectionHistory=[];prepareWheel();show(['browse','quiz','date'].includes(mode)?'all':'wheel-screen');
+}
+async function search(){
+ const generation=++searchGeneration;
+ show('loading');progress('Finding real restaurants near your location…');
+ let point=geo;
+ try{
+  if($('#zip').value.trim()){
+   const zip=$('#zip').value.trim();
+   if(!/^\d{5}$/.test(zip))throw Error('Please enter a valid five-digit ZIP code.');
+   const res=await fetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`);
+   if(!res.ok)throw Error('ZIP code not found. Please check the ZIP and try again.');
+   const data=await res.json();point={lat:+data.places[0].latitude,lon:+data.places[0].longitude,label:`${data.places[0]['place name']}, ${data.places[0]['state abbreviation']}`};
+  }
+  if(!point)throw Error('Enter a ZIP code or share your location.');
+ }catch(e){if(generation===searchGeneration){show('search-error');$('#error-message').textContent=e.message||'Could not look up this location.'}return}
+ if(generation!==searchGeneration)return;
+ const miles=+$('#radius').value,meters=Math.round(miles*1609.344);
+ const key=`${point.lat.toFixed(4)}:${point.lon.toFixed(4)}:${meters}`;
+ const cached=cacheRead(key);
+ if(cached){progress('Loading saved nearby restaurants…');presentResults(cached,point,miles);return}
+ // The Overpass query is intentionally IDENTICAL to the original working V1.0 query.
+ const query=`[out:json][timeout:35];(nwr["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
+ const endpoints=['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter'];
+ let attempt=0;
+ while(generation===searchGeneration){
+  const endpoint=endpoints[attempt%endpoints.length];
+  attempt++;
+  progress(`Searching within ${miles} miles of ${point.label}… Attempt ${attempt}. Public servers can be slow; we're still trying. You can cancel below.`);
+  try{
+   // Same fetch method as V1.0: no AbortController and no artificial browser timeout.
+   const response=await fetch(endpoint,{method:'POST',body:new URLSearchParams({data:query})});
+   if(generation!==searchGeneration)return;
+   if(!response.ok)throw Error(`Server returned HTTP ${response.status}`);
+   const data=await response.json();
+   if(!data||!Array.isArray(data.elements))throw Error('Unexpected restaurant response');
+   if(generation!==searchGeneration)return;
+   cacheWrite(key,data.elements);
+   presentResults(data,point,miles);return;
+  }catch(e){
+   console.warn('Hangryology restaurant server attempt failed:',endpoint,e);
+   if(generation!==searchGeneration)return;
+   progress(`Restaurant server busy (${attempt} ${attempt===1?'attempt':'attempts'}). Retrying automatically… You can cancel below.`);
+   await pause(Math.min(12000,3000+attempt*1000));
+  }
+ }
+}
+const cancelSearch=()=>{searchGeneration++;show('setup')};
+$('#cancel-search')?.addEventListener('click',cancelSearch);
+
 let wheelItems=[];const rejected=new Set(),locked=new Set();let rejectionHistory=[];
 const colors=['#e65a31','#144e73','#c23750','#f0a53a','#147e79','#754bb5','#c64a27','#2e6090'];
 const eligible=()=>restaurants.filter(r=>!rejected.has(r.id));
