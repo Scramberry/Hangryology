@@ -21,110 +21,49 @@ function haversine(a,b,c,d){const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,z=Math.sin(x
 function cuisineFor(tags){const raw=[tags.cuisine||'',tags.name||'',tags['name:en']||'',tags.amenity||''].join(' ').toLowerCase();if(tags.amenity==='fast_food')return 'fast_food';for(const [,,id] of categories){const words={burger:['burger','hamburger'],mexican:['mexican','taco','burrito'],chicken:['chicken','wings'],steak:['steak','steakhouse'],sandwich:['sandwich','sub'],salad:['salad','healthy'],breakfast:['breakfast','brunch','pancake'],seafood:['seafood','fish'],sushi:['sushi','japanese'],chinese:['chinese'],pizza:['pizza'],italian:['italian','pasta'],indian:['indian'],thai:['thai']}[id]||[];if(words.some(w=>raw.includes(w)))return id}return 'other'}
 function hasFries(name){return chainFries.some(c=>name.toLowerCase().includes(c))}
 function address(t){return [t['addr:housenumber'],t['addr:street'],t['addr:city']].filter(Boolean).join(' ')||'Address not listed — open directions'}
-// One shared search pipeline for Find Food, Spin the Wheel, Browse and Two Player.
-// Public OSM services are best-effort; cache results locally to reduce repeat requests.
-const OSM_ENDPOINTS=['https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass-api.de/api/interpreter'];
-const CACHE_TTL=24*60*60*1000;
-const CACHE_PREFIX='hangryology-osm-v112:';
-function readCache(key){try{const item=JSON.parse(localStorage.getItem(CACHE_PREFIX+key)||'null');return item&&Array.isArray(item.elements)?item:null}catch{return null}}
-function writeCache(key,elements){try{localStorage.setItem(CACHE_PREFIX+key,JSON.stringify({saved:Date.now(),elements}));}catch{/* Browser storage may be full or disabled. */}}
-function osmQuery(point,meters,kind='nodes'){
-  // Node-only requests are substantially lighter than nwr + out center tags.
-  const selector=kind==='nodes'?'node':'(way;relation)';
-  if(kind==='nodes')return `[out:json][timeout:18];node["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon});out body;`;
-  return `[out:json][timeout:18];(way["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon});relation["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
-}
-async function requestOSM(endpoint,query,ms=20000){
- const body=new URLSearchParams({data:query});
- const response=await timedFetch(endpoint,{method:'POST',body,headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}},ms);
- if(!response.ok)throw Error(`HTTP ${response.status}`);
- const result=await response.json();
- if(!Array.isArray(result.elements))throw Error('Invalid response');
- return result.elements;
-}
-async function fetchOSM(point,meters){
- const key=`${point.lat.toFixed(3)}:${point.lon.toFixed(3)}:${meters}`;
- const cached=readCache(key);
- if(cached&&Date.now()-cached.saved<CACHE_TTL)return {elements:cached.elements,fromCache:true};
- const errors=[];
- // Query two different hosts concurrently, instead of waiting 30 seconds per host.
- // Resolve on the first successful response; never confuse a valid empty result with an error.
- async function firstSuccess(query){
-  const attempts=OSM_ENDPOINTS.slice(0,2).map(async host=>{
-    try{return await requestOSM(host,query)}catch(e){errors.push(`${new URL(host).hostname}: ${e.name==='AbortError'?'timeout':e.message}`);throw e}
-  });
-  try{return await Promise.any(attempts)}catch{
-    try{return await requestOSM(OSM_ENDPOINTS[2],query)}catch(e){errors.push(`overpass-api.de: ${e.name==='AbortError'?'timeout':e.message}`);throw Error('Restaurant data servers could not complete the search.')}
-  }
- }
- $('#loading-text').textContent='Checking nearby restaurant listings…';
- try{
-  let elements=await firstSuccess(osmQuery(point,meters));
-  // If nodes are absent, make one attempt for businesses mapped as buildings.
-  if(elements.length===0){$('#loading-text').textContent='Checking additional restaurant listings…';elements=await firstSuccess(osmQuery(point,meters,'ways'))}
-  writeCache(key,elements);return {elements,fromCache:false};
- }catch(e){
-  if(cached){return {elements:cached.elements,fromCache:true,stale:true}}
-  throw Error('Live restaurant data is unavailable. This is a public map-data service issue, not your ZIP code. Please retry in a few minutes. '+errors.join(' | '));
- }
-}
-let searchBusy=false;
-async function search(){
- if(searchBusy)return;
- searchBusy=true;
- show('loading');$('#loading-text').textContent='Locating your food laboratory…';
- try{
-  let point=geo;
-  if($('#zip').value.trim()){
-   const zip=$('#zip').value.trim();
-   if(!/^\d{5}$/.test(zip))throw Error('Enter a valid five-digit ZIP code.');
-   const zipKey='hangryology-zip:'+zip;
-   try{
-    const res=await timedFetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`,{},9000);
-    if(!res.ok)throw Error('ZIP code not found.');
-    const data=await res.json();
-    point={lat:+data.places[0].latitude,lon:+data.places[0].longitude,label:`${data.places[0]['place name']}, ${data.places[0]['state abbreviation']}`};
-    try{localStorage.setItem(zipKey,JSON.stringify(point))}catch{}
-   }catch(e){try{point=JSON.parse(localStorage.getItem(zipKey)||'null')}catch{}if(!point)throw Error('ZIP lookup is unavailable. Please try again or use your location. '+e.message)}
-  }
-  if(!point)throw Error('Enter a ZIP code or share your location.');
-  const miles=+$('#radius').value,meters=Math.round(miles*1609.344);
-  $('#loading-text').textContent=`Searching within ${miles} miles of ${point.label}…`;
-  const result=await fetchOSM(point,meters);
-  const seen=new Set();
-  restaurants=result.elements.map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}})
-   .filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!excluded.has(r.type)&&!excluded2.has(r.type)});
-  if(mode==='quiz'||mode==='date'){
-   const fries=chosen('fries'),vibe=chosen('vibe');
-   if(fries==='yes')restaurants=restaurants.filter(r=>hasFries(r.name));
-   if(fries==='no')restaurants=restaurants.filter(r=>!hasFries(r.name));
-   if(vibe==='fast')restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food');
-   if(vibe==='sit')restaurants=restaurants.filter(r=>r.tags.amenity==='restaurant');
-  }
-  restaurants.sort((a,b)=>a.miles-b.miles);
-  if(+$('#hangry-range').value>=4)restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);
-  if(!restaurants.length)throw Error('No matching restaurants were found in the available map data. Try fewer exclusions, a wider radius, or a different dining preference.');
-  restaurants=restaurants.slice(0,80);
-  prepareWheel();
-  if(result.fromCache)$('#match-note').textContent+=' • Saved map results';
-  show(['browse','quiz','date'].includes(mode)?'all':'wheel-screen');
- }catch(e){show('search-error');$('#error-message').textContent=e.message||'Could not load restaurants. Please try again.'}
- finally{searchBusy=false}
-}
-let wheelItems=[];const colors=['#e65a31','#144e73','#c23750','#f0a53a','#147e79','#754bb5','#c64a27','#2e6090'];
-function prepareWheel(){wheelItems=[...restaurants].sort(()=>Math.random()-.5).slice(0,Math.min(8,restaurants.length));$('#match-title').textContent=`${restaurants.length} restaurants match!`;$('#match-note').textContent=`${wheelItems.length} randomly selected for the wheel • Browse all ${restaurants.length} below`;$('#all-count').textContent=`${restaurants.length} nearby matches`; rotation=0;drawWheel();renderPlaces('#contenders',wheelItems);renderPlaces('#all-list',restaurants)}
+async function search(){show('loading');$('#loading-text').textContent='Finding real restaurants near your location…';try{let point=geo;if($('#zip').value.trim()){const zip=$('#zip').value.trim();const res=await fetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`);if(!res.ok)throw Error('ZIP code not found. Please check the ZIP and try again.');const data=await res.json();point={lat:+data.places[0].latitude,lon:+data.places[0].longitude,label:`${data.places[0]['place name']}, ${data.places[0]['state abbreviation']}`}}if(!point)throw Error('Enter a ZIP code or share your location.');const miles=+$('#radius').value,meters=Math.round(miles*1609.344);$('#loading-text').textContent=`Searching within ${miles} miles of ${point.label}…`;
+const query=`[out:json][timeout:35];(nwr["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
+let data;let lastError;
+const endpoints=['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter'];
+for(const endpoint of endpoints){try{
+  $('#loading-text').textContent='Checking nearby food spots…';
+  const response=await fetch(endpoint,{method:'POST',body:new URLSearchParams({data:query})});
+  if(!response.ok)throw Error('Restaurant service busy');
+  data=await response.json();break;
+}catch(e){lastError=e;}}
+if(!data)throw Error('Restaurant services did not respond. Please retry later.');
+const seen=new Set();restaurants=data.elements.map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!excluded.has(r.type)&&!excluded2.has(r.type)});
+if(mode==='quiz'||mode==='date'){const fries=chosen('fries'),vibe=chosen('vibe');if(fries==='yes')restaurants=restaurants.filter(r=>hasFries(r.name));if(fries==='no')restaurants=restaurants.filter(r=>!hasFries(r.name));if(vibe==='fast')restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food');if(vibe==='sit')restaurants=restaurants.filter(r=>r.tags.amenity==='restaurant')}
+restaurants.sort((a,b)=>a.miles-b.miles);if(+$('#hangry-range').value>=4)restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);if(!restaurants.length)throw Error('No matching restaurants were found. Try a larger radius, fewer exclusions, or relax the fries preference.');restaurants=restaurants.slice(0,80);rejected.clear();locked.clear();rejectionHistory=[];prepareWheel();show(['browse','quiz','date'].includes(mode)?'all':'wheel-screen')}catch(e){show('search-error');$('#error-message').textContent=e.message||'Could not load restaurants. Please try again.'}}
+let wheelItems=[];const rejected=new Set(),locked=new Set();let rejectionHistory=[];
+const colors=['#e65a31','#144e73','#c23750','#f0a53a','#147e79','#754bb5','#c64a27','#2e6090'];
+const eligible=()=>restaurants.filter(r=>!rejected.has(r.id));
+function updateWheelStatus(){const n=eligible().length;$('#match-title').textContent=`${n} restaurants in the running!`;$('#match-note').textContent=`${wheelItems.length} on the wheel • ${restaurants.length} total matches • ${rejected.size} rejected`;$('#all-count').textContent=`${restaurants.length} nearby matches`;$('#wheel-status').textContent=`🔒 ${locked.size} locked · 🚫 ${rejected.size} rejected · ${n} eligible. No new restaurant search needed.`;$('#spin').disabled=spinning||!wheelItems.length;$('#wheel-undo').classList.toggle('hidden',!rejectionHistory.length);}
+function shuffleWheel(){const keep=wheelItems.filter(r=>locked.has(r.id)&&!rejected.has(r.id)).slice(0,8);const pool=eligible().filter(r=>!keep.some(k=>k.id===r.id));for(let i=pool.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1));[pool[i],pool[k]]=[pool[k],pool[i]];}wheelItems=[...keep,...pool.slice(0,8-keep.length)];rotation=0;drawWheel();renderContenders();updateWheelStatus();}
+function prepareWheel(){shuffleWheel();renderPlaces('#all-list',restaurants)}
+function renderContenders(){const el=$('#contenders');el.innerHTML=wheelItems.map(r=>`<div class="contender-row"><div><strong>${escapeHtml(r.name)}</strong><small>📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</small></div><div class="contender-actions"><button class="result-btn lock-choice" data-id="${escapeHtml(r.id)}" aria-label="${locked.has(r.id)?'Unlock':'Lock'} ${escapeHtml(r.name)}">${locked.has(r.id)?'🔒 Locked':'🔓 Lock'}</button><button class="result-btn remove-choice" data-id="${escapeHtml(r.id)}" aria-label="Remove ${escapeHtml(r.name)}">✕ Remove</button></div></div>`).join('')||'<p class="muted">No contenders left. Reset rejected restaurants to try again.</p>';
+el.querySelectorAll('.lock-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.has(id)?locked.delete(id):locked.add(id);renderContenders();updateWheelStatus()}));
+el.querySelectorAll('.remove-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);const replacement=eligible().find(r=>!wheelItems.some(w=>w.id===r.id));if(replacement)wheelItems.push(replacement);rotation=0;drawWheel();renderContenders();updateWheelStatus()}));}
 function drawWheel(){const c=$('#wheel'),ctx=c.getContext('2d'),n=wheelItems.length;if(!n)return;const cx=320,cy=320,r=290;ctx.clearRect(0,0,640,640);ctx.save();ctx.translate(cx,cy);ctx.rotate(rotation);for(let i=0;i<n;i++){const a=-Math.PI/2+i*2*Math.PI/n,b=a+2*Math.PI/n;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,a,b);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();ctx.strokeStyle='#ffd37c';ctx.lineWidth=3;ctx.stroke();ctx.save();ctx.rotate(a+Math.PI/n);ctx.translate(r*.65,0);ctx.rotate(Math.PI/2);ctx.fillStyle='#fff';ctx.font='bold 22px system-ui';ctx.textAlign='center';ctx.shadowColor='#000';ctx.shadowBlur=4;let name=wheelItems[i].name;while(ctx.measureText(name).width>160&&name.length>5)name=name.slice(0,-2)+'…';ctx.fillText(name,0,7);ctx.restore()}ctx.beginPath();ctx.arc(0,0,r+7,0,Math.PI*2);ctx.strokeStyle='#ffbe57';ctx.lineWidth=15;ctx.shadowColor='#ff9c31';ctx.shadowBlur=24;ctx.stroke();ctx.restore()}
 $('#spin').addEventListener('click',()=>{if(spinning||!wheelItems.length)return;spinning=true;$('#spin').disabled=true;const start=rotation,delta=(Math.PI*2)*(5+Math.random()*3),duration=4700,t0=performance.now();function frame(now){const t=Math.min(1,(now-t0)/duration),ease=1-Math.pow(1-t,4);rotation=start+delta*ease;drawWheel();if(t<1)requestAnimationFrame(frame);else{spinning=false;$('#spin').disabled=false;const n=wheelItems.length,step=2*Math.PI/n,angle=(((-rotation)% (2*Math.PI))+(2*Math.PI))%(2*Math.PI);winner=wheelItems[Math.floor(angle/step)%n];renderWinner();show('winner')}}requestAnimationFrame(frame)});
-function renderWinner(){$('#winner-name').textContent=winner.name;$('#winner-info').textContent=`${winner.miles.toFixed(1)} miles away • ${winner.type.replace('_',' ')}`;$('#winner-address').textContent=winner.address;$('#directions').href=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(winner.name+' '+winner.lat+','+winner.lon)}`;$('#favorite').textContent=favorites().some(x=>x.id===winner.id)?'♥ Saved':'♡ Save'}
+function safeWebsite(r){const raw=r.tags.website||r.tags['contact:website']||r.tags['website:menu']||'';try{const u=new URL(raw);return ['https:','http:'].includes(u.protocol)?u.href:null}catch{return null}}
+function mapUrl(r){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+r.lat+','+r.lon)}`}
+function renderWinner(){if(!winner)return;$('#winner-name').textContent=winner.name;$('#winner-info').textContent=`📍 ${winner.miles.toFixed(1)} miles away · ${winner.type.replace('_',' ')}`;$('#winner-address').textContent=winner.address;$('#directions').href=mapUrl(winner);$('#favorite').textContent=favorites().some(x=>x.id===winner.id)?'♥ Saved':'♡ Save';
+const tags=winner.tags||{};const website=safeWebsite(winner);const menu=$('#winner-menu');menu.href=website||`https://www.google.com/search?q=${encodeURIComponent(winner.name+' menu '+winner.address)}`;menu.textContent=website?'🌐 Restaurant Website / Menu':'🔎 Find Menu Online';const phone=tags.phone||tags['contact:phone'];const call=$('#winner-call');call.classList.toggle('hidden',!phone);if(phone)call.href=`tel:${phone.replace(/[^+0-9]/g,'')}`;
+const details=[['🍽️ Cuisine',tags.cuisine||winner.type.replace('_',' ')],['🕒 Listed hours',tags.opening_hours||'Not available — confirm with restaurant'],['🥡 Takeout',tags.takeaway==='yes'?'Listed as available':tags.takeaway==='no'?'Listed as unavailable':'Not verified'],['🚗 Delivery',tags.delivery==='yes'?'Listed as available':tags.delivery==='no'?'Listed as unavailable':'Not verified'],['📞 Phone',phone||'Not listed']];$('#winner-details').innerHTML=details.map(([label,val])=>`<div><small>${escapeHtml(label)}</small><strong>${escapeHtml(val)}</strong></div>`).join('');$('#undo-reject').classList.toggle('hidden',rejectionHistory.length===0);}
 $('#favorite').addEventListener('click',()=>{let a=favorites();a.some(x=>x.id===winner.id)?a=a.filter(x=>x.id!==winner.id):a.push(winner);saveFavorites(a);renderWinner()});
-$('#again').addEventListener('click',()=>{show('wheel-screen');rotation=0;drawWheel()});$('#other').addEventListener('click',()=>show('all'));$('#reshuffle').addEventListener('click',prepareWheel);
+$('#again').addEventListener('click',()=>{show('wheel-screen');rotation=0;drawWheel()});$('#other').addEventListener('click',()=>show('all'));$('#view-matches').addEventListener('click',()=>show('all'));$('#reshuffle').addEventListener('click',shuffleWheel);
+$('#reject-winner').addEventListener('click',()=>{if(!winner)return;const id=winner.id;rejected.add(id);rejectionHistory.push(id);locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);const replacement=eligible().find(r=>!wheelItems.some(w=>w.id===r.id));if(replacement)wheelItems.push(replacement);if(!wheelItems.length){show('wheel-screen');renderContenders();updateWheelStatus();alert('🐶 Bunsen says: You rejected everything! Reset rejects to start again.');return}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen');});
+$('#wheel-undo').addEventListener('click',()=>$('#undo-reject').click());
+$('#undo-reject').addEventListener('click',()=>{const id=rejectionHistory.pop();if(!id)return;rejected.delete(id);const r=restaurants.find(x=>x.id===id);if(r&&!wheelItems.some(x=>x.id===id)){if(wheelItems.length>=8){const idx=wheelItems.findIndex(x=>!locked.has(x.id));if(idx>=0)wheelItems.splice(idx,1);}if(wheelItems.length<8)wheelItems.push(r);}rotation=0;drawWheel();renderContenders();updateWheelStatus();$('#undo-reject').classList.toggle('hidden',!rejectionHistory.length);show('wheel-screen')});
+$('#reset-rejected').addEventListener('click',()=>{rejected.clear();rejectionHistory=[];shuffleWheel()});
 function renderPlaces(target,arr){$(target).innerHTML=arr.map(r=>{
 const query=encodeURIComponent(r.name+' '+r.lat+','+r.lon);
 const menu=r.tags.website||r.tags['contact:website']||'';
 const safeMenu=/^https?:\/\//i.test(menu)?menu:'';
 const emoji=({burger:'🍔',pizza:'🍕',mexican:'🌮',chicken:'🍗',italian:'🍝',chinese:'🥡',sushi:'🍣',steak:'🥩',sandwich:'🥪',salad:'🥗',indian:'🍛',thai:'🍜',breakfast:'🍳',fast_food:'🍟',seafood:'🦐',other:'🍽️'})[r.type]||'🍽️';
 return `<article class="result-card"><div class="result-art" aria-hidden="true">${emoji}</div><div class="result-body"><strong>${escapeHtml(r.name)}</strong><span class="result-meta">📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</span><span class="result-address">${escapeHtml(r.address)}</span><div class="result-actions"><a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query=${query}">📍 Directions</a>${safeMenu?`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="${escapeHtml(safeMenu)}">📖 Website / Menu</a>`:`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q=${encodeURIComponent(r.name+' menu near '+r.address)}">📖 Find Menu</a>`}<button class="result-btn add-wheel" data-wheel="${escapeHtml(r.id)}">🎡 Add to wheel</button></div></div></article>`}).join('')||'<p class="muted">No matches found.</p>';
-$$(`${target} .add-wheel`).forEach(b=>b.addEventListener('click',()=>{const r=restaurants.find(x=>x.id===b.dataset.wheel);if(!r)return;if(!wheelItems.some(x=>x.id===r.id)){if(wheelItems.length>=8)wheelItems.shift();wheelItems.push(r)}drawWheel();show('wheel-screen')}));}
+$$(`${target} .add-wheel`).forEach(b=>b.addEventListener('click',()=>{const r=restaurants.find(x=>x.id===b.dataset.wheel);if(!r)return;if(rejected.has(r.id)){rejected.delete(r.id);rejectionHistory=rejectionHistory.filter(x=>x!==r.id)}if(!wheelItems.some(x=>x.id===r.id)){if(wheelItems.length>=8){const i=wheelItems.findIndex(x=>!locked.has(x.id));if(i<0){alert("All eight contenders are locked. Unlock one to add another.");return}wheelItems.splice(i,1)}wheelItems.push(r)}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen')}));}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function renderSaved(){const a=favorites();$('#saved-list').innerHTML=a.map(r=>`<div class="place"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.address)}</small></div><button class="remove" data-id="${escapeHtml(r.id)}" title="Remove favorite">♥</button></div>`).join('')||'<div class="card"><p class="muted">No favorites yet. Spin the wheel and save a winner!</p></div>';$$('.remove').forEach(b=>b.addEventListener('click',()=>{saveFavorites(favorites().filter(x=>x.id!==b.dataset.id));renderSaved()}))}
 
