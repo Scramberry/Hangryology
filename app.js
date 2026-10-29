@@ -43,8 +43,12 @@ function presentResults(data,point,miles){
  if(!restaurants.length){show('search-error');$('#error-message').textContent='The search returned restaurants, but none matched your current filters. Try fewer exclusions or a different preference.';return}
  restaurants=restaurants.slice(0,80);rejected.clear();locked.clear();rejectionHistory=[];prepareWheel();show(['browse','quiz','date'].includes(mode)?'all':'wheel-screen');
 }
+// Version 1.2.5: independent, uncapped requests; no timer aborts.
+let activeSearchControllers=[];
+function stopActiveRequests(){activeSearchControllers.forEach(c=>c.abort());activeSearchControllers=[];}
 async function search(){
  const generation=++searchGeneration;
+ stopActiveRequests();
  show('loading');progress('Finding real restaurants near your location…');
  let point=geo;
  try{
@@ -62,33 +66,51 @@ async function search(){
  const key=`${point.lat.toFixed(4)}:${point.lon.toFixed(4)}:${meters}`;
  const cached=cacheRead(key);
  if(cached){progress('Loading saved nearby restaurants…');presentResults(cached,point,miles);return}
- // The Overpass query is intentionally IDENTICAL to the original working V1.0 query.
+ // Unchanged original V1.0 Overpass query.
  const query=`[out:json][timeout:35];(nwr["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
  const endpoints=['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter'];
- let attempt=0;
- while(generation===searchGeneration){
-  const endpoint=endpoints[attempt%endpoints.length];
-  attempt++;
-  progress(`Searching within ${miles} miles of ${point.label}… Attempt ${attempt}. Public servers can be slow; we're still trying. You can cancel below.`);
-  try{
-   // Same fetch method as V1.0: no AbortController and no artificial browser timeout.
-   const response=await fetch(endpoint,{method:'POST',body:new URLSearchParams({data:query})});
-   if(generation!==searchGeneration)return;
-   if(!response.ok)throw Error(`Server returned HTTP ${response.status}`);
-   const data=await response.json();
-   if(!data||!Array.isArray(data.elements))throw Error('Unexpected restaurant response');
-   if(generation!==searchGeneration)return;
-   cacheWrite(key,data.elements);
-   presentResults(data,point,miles);return;
-  }catch(e){
-   console.warn('Hangryology restaurant server attempt failed:',endpoint,e);
-   if(generation!==searchGeneration)return;
-   progress(`Restaurant server busy (${attempt} ${attempt===1?'attempt':'attempts'}). Retrying automatically… You can cancel below.`);
-   await pause(Math.min(12000,3000+attempt*1000));
+ const controllers=endpoints.map(()=>new AbortController());
+ activeSearchControllers=controllers;
+ let settled=false;
+ const attempts=[0,0];
+ const delays=[0,20000];
+ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+ function status(){
+  if(generation!==searchGeneration||settled)return;
+  progress(`Searching within ${miles} miles of ${point.label}… Server attempts: ${attempts.join(' / ')}. Slow requests remain active; you can cancel below.`);
+ }
+ // Each server retries only after its own request fails. A slow pending request
+ // is never interrupted by a timer or by the other server retrying.
+ async function runServer(endpoint,index){
+  if(delays[index])await sleep(delays[index]);
+  while(generation===searchGeneration&&!settled){
+   attempts[index]++;status();
+   try{
+    const response=await fetch(endpoint,{method:'POST',body:new URLSearchParams({data:query}),signal:controllers[index].signal});
+    if(!response.ok)throw Error(`HTTP ${response.status}`);
+    const data=await response.json();
+    if(!data||!Array.isArray(data.elements))throw Error('Unexpected restaurant response');
+    if(generation!==searchGeneration||settled)return;
+    settled=true;
+    cacheWrite(key,data.elements);
+    // Stop the other pending request only AFTER a successful result.
+    controllers.forEach((c,i)=>{if(i!==index)c.abort()});
+    activeSearchControllers=[];
+    presentResults(data,point,miles);
+    return;
+   }catch(e){
+    if(generation!==searchGeneration||settled||controllers[index].signal.aborted)return;
+    console.warn('Hangryology restaurant server attempt failed:',endpoint,e);
+    progress(`Restaurant server busy. Trying again; other requests remain active. You can cancel below.`);
+    await sleep(Math.min(20000,4000+attempts[index]*2000));
+   }
   }
  }
+ // Do not await a single server before starting the other one.
+ void runServer(endpoints[0],0);
+ void runServer(endpoints[1],1);
 }
-const cancelSearch=()=>{searchGeneration++;show('setup')};
+const cancelSearch=()=>{searchGeneration++;stopActiveRequests();show('setup')};
 $('#cancel-search')?.addEventListener('click',cancelSearch);
 
 let wheelItems=[];const rejected=new Set(),locked=new Set();let rejectionHistory=[];
