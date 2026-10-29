@@ -72,3 +72,34 @@
 #home .how-flow-line{display:none}
 #home .home-cuisines img{width:125%;max-width:none;margin-left:-12.5%}
 }
+
+/* V1.4.4: integrated neon laboratory sections */
+#home .home-meter{background:radial-gradient(ellipse 65% 80% at 65% 65%,#1050739c,transparent 80%),linear-gradient(180deg,#061b30,#071e35 55%,#03182b);border-top:2px solid #1598c95c;border-bottom:2px solid #1598c95c}
+#home .meter-labels .bunsen-level{opacity:1!important;filter:none!important;transition:transform .25s ease,filter .25s ease,opacity .25s ease}
+#home .meter-labels .bunsen-level img{opacity:1!important;filter:brightness(1.3) saturate(1.15) drop-shadow(0 0 9px #20c7ff88)!important;transition:filter .25s ease,transform .25s ease}
+#home .meter-labels .bunsen-level small{opacity:1!important;color:#f4faff!important;text-shadow:0 1px 6px #0baeff70;transition:color .25s ease,text-shadow .25s ease}
+#home .meter-labels .bunsen-level.selected{transform:translateY(-7px) scale(1.13)!important;opacity:1!important}
+#home .meter-labels .bunsen-level.selected img{filter:brightness(1.42) saturate(1.25) drop-shadow(0 0 16px #ff913a) drop-shadow(0 0 9px #31cfff)!important}
+#home .meter-labels .bunsen-level.selected small{color:#ffb469!important;text-shadow:0 0 11px #ff7c2f!important}
+#home .home-how{border-block:1px solid #12baff77;background:radial-gradient(ellipse at center,#12496c7c 0%,#04192c 74%),linear-gradient(180deg,#03182b,#041e33);box-shadow:inset 0 0 42px #007cbd35}
+#home .home-how .how-mascot{filter:brightness(1.15) saturate(1.15) drop-shadow(0 0 18px #00bfff55)}
+#home .home-how .steps i{border:1px solid #ffd4a6;box-shadow:0 0 0 7px #05314b,0 0 25px #ff8a39a0}
+#home .home-how .steps strong{filter:drop-shadow(0 0 9px #19c6ff99)}
+#home .home-how h2,#home .home-meter h2,#home .home-cuisines h2{position:relative;width:max-content;max-width:95%;margin-inline:auto;padding:11px clamp(20px,4vw,75px);border:2px solid #18baff;border-radius:9px 9px 18px 18px;clip-path:polygon(6% 0,94% 0,100% 40%,100% 80%,94% 100%,6% 100%,0 80%,0 40%);background:linear-gradient(180deg,#082e50ee,#04182df5);box-shadow:0 0 22px #12bdff66,inset 0 0 16px #13baff25;text-shadow:0 0 13px #2bb8ff55;z-index:3}
+#home .home-cuisines{padding:48px 0 30px;overflow:hidden;background:radial-gradient(ellipse at 50% 70%,#0b385a7a,transparent 75%),#03182a;border-top:1px solid #11b5f45e}
+#home .home-cuisines h2{margin-bottom:0}
+#home .home-cuisines img{display:block;width:100%;max-height:none;height:auto;object-fit:contain;margin:0;opacity:1;mask-image:none!important;-webkit-mask-image:none!important}
+@media(max-width:700px){#home .home-cuisines img{width:150%;max-width:none;margin-left:-25%}#home .home-how h2,#home .home-meter h2,#home .home-cuisines h2{font-size:clamp(22px,6vw,36px);padding:9px 24px}}
+
+/* V1.4.5: dedicated illustrated How It Works stations; text stays HTML */
+#home .how-lab-v145{position:relative;overflow:hidden;padding:50px clamp(20px,5vw,90px) 60px;background:radial-gradient(ellipse 85% 80% at center,#0a3656 0%,#04182c 72%),#031629;isolation:isolate}
+#home .how-lab-v145:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;background:repeating-linear-gradient(90deg,transparent 0 130px,#1170a122 131px 133px,transparent 134px 270px),linear-gradient(180deg,#0bb6ff12,transparent 30%,transparent 80%,#0bb6ff17)}
+#home .how-lab-v145 .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(6px,1.2vw,24px);position:relative;z-index:2;align-items:start}
+#home .how-lab-v145 .how-step{min-width:0;display:flex;flex-direction:column;align-items:center;position:relative;padding:16px 2px 12px}
+#home .how-lab-v145 .how-step i{position:relative;z-index:3;display:grid;place-items:center;width:43px;height:43px;border-radius:50%;font-style:normal;font-weight:900;color:#071629;background:linear-gradient(#ffc173,#ff792e);box-shadow:0 0 20px #ff812eaa}
+#home .how-lab-v145 .how-step img{display:block;width:100%;height:clamp(165px,18vw,300px);object-fit:contain;filter:drop-shadow(0 0 12px #13aefa65);margin:0 auto -8px;transition:transform .3s,filter .3s}
+#home .how-lab-v145 .how-step:hover img{transform:translateY(-5px);filter:drop-shadow(0 0 19px #28c7ffcc)}
+#home .how-lab-v145 .how-step p{position:relative;z-index:3;color:#eff8ff;font-size:clamp(13px,1.1vw,17px);line-height:1.45;text-align:center;text-shadow:0 2px 5px #00111e;margin:0}
+#home .how-lab-v145 .how-flow-line{top:56%;left:6%;right:6%;height:3px;z-index:1;box-shadow:0 0 14px #20caff}
+@media(max-width:760px){#home .how-lab-v145 .steps{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:18px}#home .how-lab-v145 .how-step img{height:clamp(150px,32vw,230px)}#home .how-lab-v145 .how-flow-line{display:none}}
+@media(max-width:420px){#home .how-lab-v145 .steps{gap:8px}#home .how-lab-v145 .how-step img{height:145px}#home .how-lab-v145 .how-step p{font-size:12px}}
