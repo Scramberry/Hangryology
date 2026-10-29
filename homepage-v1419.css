@@ -1,0 +1,25 @@
+/* V1.4.19: new taller industrial-metal food-dome panorama; preserve site background and neon headers. */
+#home .home-cuisines>.cuisine-panorama-crop{
+  width:100%!important;
+  aspect-ratio:auto!important;
+  height:auto!important;
+  overflow:hidden!important;
+  margin:0!important;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 15%,#000 85%,transparent 100%)!important;
+  mask-image:linear-gradient(to bottom,transparent 0%,#000 15%,#000 85%,transparent 100%)!important;
+}
+#home .home-cuisines .cuisine-panorama-crop>img{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  margin:0!important;
+  transform:none!important;
+  object-fit:contain!important;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+}
+@media(max-width:650px){
+ #home .home-cuisines>.cuisine-panorama-crop{aspect-ratio:auto!important}
+ #home .home-cuisines .cuisine-panorama-crop>img{width:145%!important;max-width:none!important;margin-left:-22.5%!important;transform:none!important}
+}
