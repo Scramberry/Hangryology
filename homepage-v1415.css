@@ -1,0 +1,18 @@
+/* Homepage-only refinements; no JavaScript changes */
+#home .cinematic-home::before{content:none!important}
+#home .home-hero{margin-bottom:0!important;min-height:clamp(650px,46vw,850px)!important;border-bottom:0!important;background:#04172b!important}
+#home .home-hero .hero-duo{height:100%!important;object-fit:cover!important;object-position:center bottom!important;mask-image:linear-gradient(to right,transparent,#000 19%)!important;-webkit-mask-image:linear-gradient(to right,transparent,#000 19%)!important}
+#home .home-meter,#home .home-experiments-wrap,#home .home-how.how-lab-v149,#home .home-cuisines{background-color:#051c30!important;background-image:linear-gradient(rgba(3,20,37,.66),rgba(3,20,37,.73)),url('hangryology-lab-background-v1413.webp')!important;background-size:cover!important;background-position:center!important}
+#home .home-meter{margin-top:0!important}
+#home .home-meter .meter-inner{margin-left:39%!important;width:61%!important;padding-left:12px!important}
+#home .home-meter .meter-labels .bunsen-level img{width:clamp(82px,7vw,130px)!important;height:clamp(88px,7.5vw,142px)!important;object-fit:contain!important}
+#home .home-meter .meter-labels .bunsen-level small{font-size:clamp(11px,.95vw,15px)!important;font-weight:900!important;line-height:1.35!important;color:#f7fbff!important;text-shadow:0 2px 6px #00101d,0 0 8px #14aaff!important}
+#home .home-experiments .experiment{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
+#home .home-experiments .experiment:hover,#home .home-experiments .experiment:focus-visible{box-shadow:none!important;transform:translateY(-5px)!important}
+#home .home-experiments .experiment>img{width:112%!important;max-width:none!important;margin-left:-6%!important;height:clamp(270px,23vw,390px)!important;object-fit:contain!important;mask-image:radial-gradient(ellipse 76% 76% at 50% 47%,#000 54%,transparent 100%)!important;-webkit-mask-image:radial-gradient(ellipse 76% 76% at 50% 47%,#000 54%,transparent 100%)!important}
+#home .home-experiments .experiment-copy{margin-top:-18px!important}
+#home .home-how.how-lab-v149 .how-panorama,#home .home-how.how-lab-v149>img,#home .home-how.how-lab-v149 .how-scene{mask-image:linear-gradient(to bottom,transparent,#000 18%,#000 79%,transparent)!important;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 18%,#000 79%,transparent)!important}
+#home .home-cuisines{padding-top:145px!important}
+#home .home-cuisines>img{margin-top:28px!important}
+@media(max-width:900px){#home .home-meter .meter-inner{margin-left:31%!important;width:69%!important}}
+@media(max-width:650px){#home .home-hero{min-height:740px!important}#home .home-hero .hero-duo{height:420px!important;mask-image:linear-gradient(to top,#000 55%,transparent)!important;-webkit-mask-image:linear-gradient(to top,#000 55%,transparent)!important}#home .home-meter .meter-inner{margin:0!important;width:100%!important;padding:0!important}#home .home-meter .meter-labels .bunsen-level img{width:clamp(50px,14vw,82px)!important;height:clamp(57px,16vw,90px)!important}#home .home-meter .meter-labels .bunsen-level small{font-size:clamp(9px,2.1vw,12px)!important}#home .home-experiments .experiment>img{height:clamp(155px,40vw,255px)!important}#home .home-cuisines{padding-top:95px!important}}
