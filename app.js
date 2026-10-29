@@ -47,7 +47,7 @@ const chosen=id=>$('#'+id+' .selected')?.dataset.value||'any';
 $('#continue').addEventListener('click',()=>{
  if(!/^\d{5}$/.test($('#zip').value.trim())&&!geo){alert('Please enter a valid 5-digit US ZIP code or use your location.');return}
  if(mode==='date'){show('chemistry-player1');return}
- if(mode==='spin'||mode==='browse'||+$('#hangry-range').value>=5)search();else show('quiz');
+ if(mode==='spin'||mode==='browse'||+$('#hangry-range').value>=4)search();else show('quiz');
 });
 $('#find').addEventListener('click',search);
 $('#chemistry-next').addEventListener('click',()=>show('chemistry-player2'));
@@ -209,7 +209,7 @@ $$(`${target} .add-wheel`).forEach(b=>b.addEventListener('click',()=>{const r=re
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function renderSaved(){const a=favorites();$('#saved-list').innerHTML=a.map(r=>`<div class="place"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.address)}</small></div><button class="remove" data-id="${escapeHtml(r.id)}" title="Remove favorite">♥</button></div>`).join('')||'<div class="card"><p class="muted">No favorites yet. Spin the wheel and save a winner!</p></div>';$$('.remove').forEach(b=>b.addEventListener('click',()=>{saveFavorites(favorites().filter(x=>x.id!==b.dataset.id));renderSaved()}))}
 
-const hangryMessages=[['Oh, you’re just browsing. Must be nice.','Take your time and explore.'],['A snack could fix this.','We’ll help narrow it down.'],['We’re running out of patience here.','We’ll keep your food mission focused.'],['Someone get this person a cheeseburger!','Quick-service options will get priority.'],['🚨 THIS IS NOT A DRILL. DEPLOY THE FRIES!','We’ll skip the quiz and prioritize nearby quick food.']];
+const hangryMessages=[['Oh, you’re just browsing. Must be nice.','Take your time and explore.'],['A snack could fix this.','We’ll help narrow it down.'],['We’re running out of patience here.','We’ll keep your food mission focused.'],['Someone get this person a cheeseburger!','Skip the quiz and prioritize nearby quick-service options.'],['🚨 THIS IS NOT A DRILL. DEPLOY THE FRIES!','We’ll skip the quiz and prioritize nearby quick food.']];
 $('#hangry-range').addEventListener('input',e=>{const i=+e.target.value-1;$('#hangry-status').textContent=hangryMessages[i][0];$('#hangry-tip').textContent=hangryMessages[i][1];localStorage.setItem('hangryologyLevel',e.target.value)});$('#hangry-range').value=localStorage.getItem('hangryologyLevel')||'3';$('#hangry-range').dispatchEvent(new Event('input'));
 $('#menu-toggle').addEventListener('click',()=>$('#mobile-menu').classList.toggle('open'));
 

@@ -1,0 +1,120 @@
+/* Hangryology V1.4.20 — cinematic full-bleed hero, tighter dome panorama,
+   full-height Bunsen and meter urgency polish. Existing lab background unchanged. */
+#home .home-hero{
+ position:relative!important;
+ isolation:isolate!important;
+ min-height:clamp(650px,45vw,830px)!important;
+ background:#041729!important;
+ overflow:hidden!important;
+}
+#home .home-hero .hero-duo{
+ position:absolute!important;
+ inset:0!important;
+ top:0!important;
+ left:0!important;
+ right:0!important;
+ bottom:0!important;
+ width:100%!important;
+ height:100%!important;
+ max-width:none!important;
+ object-fit:cover!important;
+ object-position:center 45%!important;
+ opacity:1!important;
+ filter:saturate(1.08) brightness(.96)!important;
+ -webkit-mask-image:none!important;
+ mask-image:none!important;
+ z-index:0!important;
+}
+#home .home-hero::after{
+ content:""!important;
+ position:absolute!important;
+ inset:0!important;
+ z-index:1!important;
+ pointer-events:none!important;
+ background:linear-gradient(90deg,
+  rgba(2,15,30,.93) 0%,
+  rgba(2,17,33,.86) 23%,
+  rgba(2,18,34,.64) 43%,
+  rgba(2,17,32,.18) 67%,
+  rgba(2,17,32,0) 100%)!important;
+}
+#home .home-hero .hero-copy{
+ z-index:3!important;
+ position:relative!important;
+ width:min(58%,790px)!important;
+}
+#home .home-hero .hero-copy::before,
+#home .home-hero .hero-ambient{
+ display:none!important;
+}
+#home .home-hero .hero-copy p{
+ text-shadow:0 2px 15px rgba(0,0,0,.9)!important;
+}
+#home .home-meter{
+ align-items:stretch!important;
+ position:relative!important;
+}
+#home .home-meter .meter-sidekicks{
+ align-self:stretch!important;
+ height:100%!important;
+ max-height:none!important;
+ position:absolute!important;
+ left:0!important;
+ top:0!important;
+ bottom:0!important;
+ width:39%!important;
+ object-fit:cover!important;
+ object-position:25% bottom!important;
+ border-radius:0!important;
+ -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 55%,transparent 100%)!important;
+ mask-image:linear-gradient(90deg,#000 0%,#000 55%,transparent 100%)!important;
+}
+#home .home-meter .meter-inner{
+ position:relative!important;
+ z-index:1!important;
+}
+#home .home-cuisines{
+ padding-top:15px!important;
+}
+#home .home-cuisines>h2{
+ margin-bottom:0!important;
+ position:relative!important;
+ z-index:3!important;
+}
+#home .home-cuisines>.cuisine-panorama-crop{
+ margin-top:-12px!important;
+}
+#home .home-cuisines .cuisine-panorama-crop>img{
+ display:block!important;
+}
+#home #hangry-action-explainer{
+ color:#bfe9ff;
+ text-align:center;
+ font-size:clamp(12px,.9vw,15px);
+ margin:8px auto 0;
+ text-shadow:0 1px 6px #001526;
+}
+@media(max-width:900px){
+ #home .home-hero .hero-copy{width:65%!important}
+ #home .home-hero .hero-duo{object-position:60% center!important}
+ #home .home-meter .meter-sidekicks{width:31%!important}
+}
+@media(max-width:650px){
+ #home .home-hero{min-height:740px!important}
+ #home .home-hero .hero-duo{
+  object-position:64% bottom!important;
+  height:100%!important;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+ }
+ #home .home-hero::after{
+  background:linear-gradient(to bottom,
+   rgba(2,15,30,.94) 0%,
+   rgba(2,15,30,.89) 34%,
+   rgba(2,15,30,.40) 59%,
+   rgba(2,15,30,.04) 100%)!important;
+ }
+ #home .home-hero .hero-copy{width:100%!important}
+ #home .home-meter .meter-sidekicks{display:none!important}
+ #home .home-cuisines{padding-top:20px!important}
+}
