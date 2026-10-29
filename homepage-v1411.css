@@ -1,0 +1,50 @@
+/* Hangryology 1.4.11 — targeted visual fixes; no JS changes. */
+#home .cinematic-home {background:#051c30!important;}
+/* Unified continuous section colors; no extra upper band. */
+#home .home-how.how-lab-v149 {background:linear-gradient(180deg,#052139,#051c30)!important;padding-bottom:30px!important;border-bottom:0!important;}
+#home .home-cuisines {box-sizing:border-box;overflow:visible!important;position:relative!important;margin:0!important;max-width:none!important;width:100%!important;padding:100px 0 0!important;border-top:1px solid #28c5ff70!important;background:#051c30!important;isolation:isolate;}
+#home .home-cuisines img {display:block!important;width:100%!important;max-width:100%!important;height:auto!important;max-height:none!important;margin:0!important;object-fit:contain!important;object-position:center!important;border:0!important;border-radius:0!important;filter:saturate(1.08)!important;mask-image:linear-gradient(to bottom,transparent 0%,#000 9%,#000 90%,transparent 100%)!important;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 9%,#000 90%,transparent 100%)!important;}
+/* All tabs: full perimeter neon border including slanted corners. No disconnected line fragments. */
+#home .home-meter .meter-inner h2,#home .home-how.how-lab-v149>h2,#home .home-cuisines>h2,#home .home-experiments-wrap>.lab-section-tab {
+ box-sizing:border-box!important;position:absolute!important;top:0!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;
+ display:block!important;width:max-content!important;max-width:calc(100% - 28px)!important;margin:0!important;
+ padding:17px clamp(30px,4vw,70px)!important;border:0!important;border-radius:0!important;
+ clip-path:none!important;background:transparent!important;box-shadow:none!important;filter:drop-shadow(0 0 9px #12baff8c)!important;
+ color:#f8fbff!important;text-align:center!important;white-space:nowrap!important;line-height:1.15!important;font-size:clamp(22px,3vw,48px)!important;z-index:30!important;isolation:isolate!important;
+}
+#home .home-meter .meter-inner h2::before,#home .home-how.how-lab-v149>h2::before,#home .home-cuisines>h2::before,#home .home-experiments-wrap>.lab-section-tab::before {
+ content:""!important;position:absolute!important;inset:0!important;width:auto!important;height:auto!important;transform:none!important;
+ border:0!important;background:linear-gradient(120deg,#00a5f8,#72e9ff 30%,#16b7ff 70%,#ff943e)!important;
+ clip-path:polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%)!important;z-index:-2!important;filter:none!important;
+}
+#home .home-meter .meter-inner h2::after,#home .home-how.how-lab-v149>h2::after,#home .home-cuisines>h2::after,#home .home-experiments-wrap>.lab-section-tab::after {
+ content:""!important;position:absolute!important;inset:2px!important;width:auto!important;height:auto!important;transform:none!important;
+ border:0!important;background:linear-gradient(180deg,#0b3653,#06192d 70%,#09253b)!important;
+ clip-path:polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%)!important;z-index:-1!important;filter:none!important;
+}
+#home .home-meter .meter-inner h2 em,#home .home-how.how-lab-v149>h2 em,#home .home-cuisines>h2 em,#home .lab-section-tab em {font-style:normal;color:#ff8f39!important;}
+/* Header above content and always within its section. */
+#home .home-how.how-lab-v149>h2 {margin:0!important;}
+#home .home-cuisines>h2 {margin:0!important;}
+/* Enlarged side scene, fading toward the controls and section floor. */
+#home .home-meter {min-height:530px!important;padding-top:112px!important;padding-bottom:48px!important;}
+#home .home-meter .meter-sidekicks {display:block!important;position:absolute!important;left:0!important;top:0!important;width:43%!important;height:100%!important;max-height:none!important;object-fit:cover!important;object-position:45% 50%!important;border-radius:0!important;mask-image:linear-gradient(to right,#000 0%,#000 53%,transparent 99%)!important;-webkit-mask-image:linear-gradient(to right,#000 0%,#000 53%,transparent 99%)!important;}
+#home .home-meter .meter-inner {margin-left:35%!important;width:65%!important;}
+/* Experiment hubs share the surrounding navy; the edges disappear rather than creating a second rectangle. */
+#home .home-experiments-wrap {position:relative;isolation:isolate;border-top:1px solid #20baff85;background:#051c30;padding-top:60px;}
+#home .home-experiments {max-width:1580px!important;padding-top:75px!important;background:transparent!important;}
+#home .home-experiments .experiment {background:linear-gradient(180deg,#06253d 0%,#061f34 65%,#051b30 100%)!important;}
+#home .home-experiments .experiment>img {display:block!important;box-sizing:border-box!important;width:100%!important;height:clamp(245px,19vw,340px)!important;padding:0!important;object-fit:contain!important;object-position:center!important;mask-image:radial-gradient(ellipse 72% 68% at 50% 45%,black 55%,transparent 100%)!important;-webkit-mask-image:radial-gradient(ellipse 72% 68% at 50% 45%,black 55%,transparent 100%)!important;}
+#home .home-experiments .experiment-copy {margin-top:-8px!important;}
+@media(max-width:900px){#home .home-meter .meter-sidekicks{width:36%!important}#home .home-meter .meter-inner{margin-left:28%!important;width:72%!important}}
+@media(max-width:650px){
+ #home .home-meter{min-height:0!important;padding:85px 12px 40px!important}
+ #home .home-meter .meter-sidekicks{display:none!important}
+ #home .home-meter .meter-inner{margin:0!important;width:100%!important;padding:0!important}
+ #home .home-cuisines{padding-top:70px!important}
+ #home .home-cuisines img{width:100%!important;margin:0!important}
+ #home .home-experiments-wrap{padding-top:40px}
+ #home .home-experiments{padding-top:65px!important}
+ #home .home-experiments .experiment>img{height:clamp(145px,35vw,230px)!important}
+ #home .home-meter .meter-inner h2,#home .home-how.how-lab-v149>h2,#home .home-cuisines>h2,#home .home-experiments-wrap>.lab-section-tab{font-size:clamp(16px,4.3vw,28px)!important;padding:12px 22px!important}
+}
