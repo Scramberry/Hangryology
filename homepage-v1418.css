@@ -1,0 +1,82 @@
+/* V1.4.18: three centered neon dividers, subtle legibility fades, open cuisine domes.
+   Existing laboratory wallpaper, four cutout images, and JS stay untouched. */
+#home .home-experiments-wrap{padding:0 0 78px!important;position:relative!important}
+#home .home-experiments{padding-top:48px!important;padding-bottom:35px!important}
+#home .home-experiments .experiment{min-height:490px!important}
+#home .home-experiments .experiment-copy{
+  position:relative!important;isolation:isolate!important;
+  padding:38px 10px 22px!important;margin-top:-35px!important;
+  background:linear-gradient(to bottom,transparent 0%,rgba(1,13,28,.30) 22%,rgba(1,12,27,.82) 85%,rgba(1,12,27,.80) 100%)!important;
+  border-radius:0 0 40% 40% / 0 0 14% 14%!important;
+  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 20%,#000 87%,transparent)!important;
+  mask-image:linear-gradient(to bottom,transparent,#000 20%,#000 87%,transparent)!important;
+}
+#home .home-experiments .experiment-copy strong,#home .home-experiments .experiment-copy small,#home .home-experiments .experiment-copy b{position:relative!important;z-index:1!important}
+/* Reset the old negative margin that pulled the How It Works tab over the buttons. */
+#home .home-how.how-lab-v149{margin:0!important;padding:85px 0 55px!important;border:0!important}
+#home .home-how.how-lab-v149>h2{margin:0 auto 45px!important}
+#home .home-cuisines{margin:0!important;padding:70px 0 0!important;border:0!important;overflow:visible!important}
+#home .home-cuisines>h2{margin:0 auto 35px!important}
+/* Identical, centered angular tabs and horizontal neon rules extending to the viewport. */
+#home .home-experiments-wrap>.lab-section-tab,
+#home .home-how.how-lab-v149>h2,
+#home .home-cuisines>h2{
+  box-sizing:border-box!important;position:relative!important;display:table!important;
+  width:max-content!important;max-width:calc(100% - 40px)!important;
+  left:auto!important;right:auto!important;transform:none!important;
+  margin-left:auto!important;margin-right:auto!important;
+  z-index:5!important;text-align:center!important;
+  padding:20px clamp(30px,4vw,72px)!important;
+  background:linear-gradient(115deg,#04243d,#092f4d 50%,#06223b)!important;
+  border:2px solid #12baff!important;border-right-color:#ff9b43!important;
+  clip-path:polygon(8% 0,92% 0,100% 50%,92% 100%,8% 100%,0 50%)!important;
+  filter:drop-shadow(0 0 12px rgba(0,179,255,.38))!important;
+  font-weight:900!important;
+}
+/* A rule behind the heading, full width; heading itself stays in front. */
+#home .home-experiments-wrap::after,
+#home .home-how.how-lab-v149::after,
+#home .home-cuisines::after{
+  content:""!important;position:absolute!important;left:0!important;right:0!important;
+  height:2px!important;z-index:2!important;pointer-events:none!important;
+  background:linear-gradient(90deg,transparent,#12baff 7%,#14c8ff 50%,#ff9a39 93%,transparent)!important;
+  box-shadow:0 0 12px #00baff!important;
+}
+#home .home-experiments-wrap::after{top:55px!important}
+#home .home-how.how-lab-v149::after{top:136px!important}
+#home .home-cuisines::after{top:123px!important}
+#home .home-how.how-lab-v149,#home .home-cuisines{position:relative!important;isolation:isolate!important}
+/* Keep the original seven domes, but crop away the heavy overhead metal rig.
+   Fade the upper crop into the unchanged page-wide lab wallpaper. */
+#home .home-cuisines>.cuisine-panorama-crop{
+  width:100%!important;overflow:hidden!important;position:relative!important;
+  aspect-ratio:2.95/1!important;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 13%,#000 86%,transparent 100%)!important;
+  mask-image:linear-gradient(to bottom,transparent 0%,#000 13%,#000 86%,transparent 100%)!important;
+}
+#home .home-cuisines .cuisine-panorama-crop>img{
+  display:block!important;width:100%!important;max-width:none!important;
+  height:auto!important;margin:0!important;
+  transform:translateY(-13%) scale(1.01)!important;transform-origin:center top!important;
+  -webkit-mask-image:none!important;mask-image:none!important;
+}
+#home .footnote{margin-top:0!important;padding:5px 12px 22px!important}
+@media(max-width:900px){
+ #home .home-experiments-wrap{padding-bottom:65px!important}
+ #home .home-how.how-lab-v149{padding-top:75px!important}
+ #home .home-how.how-lab-v149::after{top:126px!important}
+ #home .home-cuisines::after{top:120px!important}
+}
+@media(max-width:650px){
+ #home .home-experiments-wrap{padding-bottom:55px!important}
+ #home .home-experiments{padding-top:30px!important}
+ #home .home-experiments .experiment{min-height:335px!important}
+ #home .home-experiments .experiment-copy{margin-top:-15px!important;padding:22px 5px 16px!important}
+ #home .home-how.how-lab-v149{padding-top:70px!important}
+ #home .home-how.how-lab-v149::after{top:113px!important}
+ #home .home-cuisines{padding-top:60px!important}
+ #home .home-cuisines::after{top:101px!important}
+ #home .home-cuisines>.cuisine-panorama-crop{aspect-ratio:1.9/1!important}
+ #home .home-cuisines .cuisine-panorama-crop>img{width:145%!important;max-width:none!important;margin-left:-22.5%!important;transform:translateY(-10%)!important}
+ #home .home-experiments-wrap>.lab-section-tab,#home .home-how.how-lab-v149>h2,#home .home-cuisines>h2{font-size:clamp(17px,4.6vw,28px)!important;padding:16px 28px!important}
+}
