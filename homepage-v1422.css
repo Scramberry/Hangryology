@@ -1,0 +1,91 @@
+/* Hangryology V1.4.22 — precise meter header and lower divider alignment.
+   Only the Hangry Meter is affected. All existing imagery and logic are retained. */
+@media(min-width:651px){
+ #home .home-meter{
+   position:relative!important;
+   box-sizing:border-box!important;
+   min-height:650px!important;
+   padding:0 3vw 0!important;
+   margin:0!important;
+   border-top:0!important;
+   border-bottom:0!important;
+   overflow:visible!important;
+ }
+ /* Draw the header's cyan divider at the actual top of this section. */
+ #home .home-meter::before{
+   content:""!important;
+   position:absolute!important;
+   left:0!important;right:0!important;top:0!important;
+   height:2px!important;
+   z-index:3!important;
+   background:linear-gradient(90deg,#07a9f0,#20c6ff 50%,#fa9a43)!important;
+   box-shadow:0 0 12px rgba(0,181,255,.65)!important;
+   pointer-events:none!important;
+ }
+ /* Keep the angular heading centered on the *entire viewport*, not the right column. */
+ #home .home-meter .meter-inner>h2{
+   position:absolute!important;
+   top:0!important;
+   left:50%!important;
+   right:auto!important;
+   transform:translate(-50%,-50%)!important;
+   margin:0!important;
+   width:max-content!important;
+   max-width:calc(100vw - 30px)!important;
+   text-align:center!important;
+   z-index:6!important;
+ }
+ #home .home-meter .meter-inner{
+   position:relative!important;
+   margin-left:39%!important;
+   width:61%!important;
+   padding:170px 2vw 35px 0!important;
+   min-height:650px!important;
+   box-sizing:border-box!important;
+ }
+ /* An absolute header cannot be positioned against a column-relative parent.
+    Anchor it to the section itself using a fixed viewport-centered offset. */
+ #home .home-meter .meter-inner>h2{
+   left:calc((50vw - 39vw) / .61)!important;
+   left:calc(50% - 19.5vw)!important;
+ }
+ #home .home-meter .meter-sidekicks{
+   top:0!important;
+   bottom:0!important;
+   left:0!important;
+   height:100%!important;
+   width:39%!important;
+   object-fit:cover!important;
+   object-position:left bottom!important;
+ }
+ #home .home-experiments-wrap{
+   position:relative!important;
+   margin-top:0!important;
+   border-top:0!important;
+ }
+ #home .home-experiments-wrap::before{
+   content:""!important;
+   position:absolute!important;
+   left:0!important;right:0!important;top:0!important;
+   height:2px!important;
+   background:linear-gradient(90deg,#0bbfff,#19cfff 70%,#ff9d43)!important;
+   box-shadow:0 0 10px rgba(0,187,255,.55)!important;
+   z-index:2!important;
+   pointer-events:none!important;
+ }
+}
+@media(min-width:651px) and (max-width:900px){
+ #home .home-meter .meter-inner{margin-left:30%!important;width:70%!important;padding-top:155px!important}
+ #home .home-meter .meter-inner>h2{left:20vw!important}
+ #home .home-meter .meter-sidekicks{width:30%!important}
+}
+@media(max-width:650px){
+ #home .home-meter .meter-inner>h2{
+   position:relative!important;
+   top:auto!important;left:auto!important;
+   transform:none!important;
+   margin:12px auto 38px!important;
+ }
+ #home .home-meter{border-top:1px solid #0bbfff!important}
+ #home .home-experiments-wrap{border-top:1px solid #0bbfff!important}
+}
