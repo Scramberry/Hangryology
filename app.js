@@ -1,20 +1,60 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const categories=[['🍔','Burgers','burger'],['🍕','Pizza','pizza'],['🌮','Mexican','mexican'],['🍗','Chicken','chicken'],['🍝','Italian','italian'],['🥡','Chinese','chinese'],['🍣','Sushi','sushi'],['🥩','Steak','steak'],['🥪','Sandwiches','sandwich'],['🥗','Salads','salad'],['🍛','Indian','indian'],['🍜','Thai','thai'],['🍳','Breakfast','breakfast'],['🍟','Fast Food','fast_food'],['🦐','Seafood','seafood']];
 const chainFries=['mcdonald','burger king','wendy','five guys','chick-fil-a','chick fil a','popeyes','culver','shake shack','sonic','checkers','rally','dairy queen','hardee','carls jr','jack in the box','whataburger','in-n-out','arbys','arby’s','kfc'];
-let mode='spin',excluded=new Set(),excluded2=new Set(),restaurants=[],rotation=0,spinning=false,winner=null,geo=null;
+let mode='spin',excluded=new Set(),excluded2=new Set(),soloExcluded=new Set(),restaurants=[],rotation=0,spinning=false,winner=null,geo=null;
 const favorites=()=>JSON.parse(localStorage.getItem('dinnerRouletteFavorites')||'[]');
 const saveFavorites=a=>localStorage.setItem('dinnerRouletteFavorites',JSON.stringify(a));
 const show=id=>{ $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));window.scrollTo({top:0,behavior:'instant'});if(id==='saved')renderSaved();};
-$$('[data-go]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.mode){mode=b.dataset.mode;$('#player2').classList.toggle('hidden',mode!=='date')}if(b.dataset.go==='wheel-screen'&&!wheelItems.length){mode='spin';show('setup')}else show(b.dataset.go);$('#mobile-menu').classList.remove('open')}));
-$$('[data-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;$('#player2').classList.toggle('hidden',mode!=='date');show('setup')}));
+// Each experiment begins with clean choices. Restaurant search cache is shared,
+// but wheel exclusions and each person's preferences are never carried across modes.
+function clearChips(id){$$('#'+id+' .chip').forEach((b,i)=>b.classList.toggle('selected',i===0))}
+function resetExperiment(){
+ searchGeneration++;stopActiveRequests();
+ excluded.clear();excluded2.clear();soloExcluded.clear();
+ $$('[data-category], [data-category2], [data-category-solo]').forEach(b=>b.classList.remove('excluded'));
+ ['service','solo-fries','solo-vibe','fries','vibe','fries2','vibe2'].forEach(clearChips);
+ restaurants=[];wheelItems=[];wheelTargetSize=8;rejected.clear();locked.clear();rejectionHistory=[];
+ winner=null;rotation=0;spinning=false;
+ $('#spin').disabled=false;
+ $('#all-list').innerHTML='';$('#contenders').innerHTML='';
+ $('#chemistry-results').classList.add('hidden');
+ $('#chemistry-setup').classList.toggle('hidden',mode!=='date');
+ $('#solo-cuisines').classList.toggle('hidden',mode==='date');
+ $('#quiz-heading').textContent=mode==='date'?'Craving Chemistry: Two separate appetites.':'Time for your food diagnosis.';
+ $('#quiz-player1').classList.toggle('hidden',mode==='date');
+ $('#quiz-solo').classList.toggle('hidden',mode==='date');
+ $('#player2').classList.add('hidden');
+ $('#chemistry-step2').classList.add('hidden');
+ $('#chemistry-step1').classList.remove('hidden');
+ $('#continue').textContent=mode==='date'?'Continue to Player 1 →':'Continue →';
+}
+function enterMode(next){mode=next;resetExperiment();show('setup')}
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>{
+ if(b.dataset.mode){enterMode(b.dataset.mode)}
+ else if(b.dataset.go==='wheel-screen'&&!wheelItems.length){enterMode('spin')}
+ else show(b.dataset.go);
+ $('#mobile-menu').classList.remove('open');
+}));
+$$('[data-mode]').forEach(b=>b.addEventListener('click',()=>enterMode(b.dataset.mode)));
+$('#reset-experiment').addEventListener('click',()=>{if(confirm('Start this experiment over? Your saved favorite restaurants and cached searches will stay.')){resetExperiment();show('setup')}});
+$('#reset-from-results').addEventListener('click',()=>{resetExperiment();show('setup')});
+$('#cuisinesSolo').innerHTML=categories.map(([emoji,label,id])=>`<button class="food" data-category-solo="${id}"><span>${emoji}</span>${label}</button>`).join('');
+$$('[data-category-solo]').forEach(b=>b.addEventListener('click',()=>{const c=b.dataset.categorySolo;soloExcluded.has(c)?soloExcluded.delete(c):soloExcluded.add(c);b.classList.toggle('excluded',soloExcluded.has(c))}));
 $('#cuisines').innerHTML=categories.map(([emoji,label,id])=>`<button class="food" data-category="${id}"><span>${emoji}</span>${label}</button>`).join('');
 $('#cuisines2').innerHTML=categories.map(([emoji,label,id])=>`<button class="food" data-category2="${id}"><span>${emoji}</span>${label}</button>`).join('');
 $$('[data-category2]').forEach(b=>b.addEventListener('click',()=>{const c=b.dataset.category2;excluded2.has(c)?excluded2.delete(c):excluded2.add(c);b.classList.toggle('excluded',excluded2.has(c))}));
 $$('[data-category]').forEach(b=>b.addEventListener('click',()=>{const c=b.dataset.category;excluded.has(c)?excluded.delete(c):excluded.add(c);b.classList.toggle('excluded',excluded.has(c))}));
-for(const id of ['service','fries','vibe']){$$('#'+id+' .chip').forEach(b=>b.addEventListener('click',()=>{$$('#'+id+' .chip').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')}))}
+for(const id of ['service','solo-fries','solo-vibe','fries','vibe','fries2','vibe2']){$$('#'+id+' .chip').forEach(b=>b.addEventListener('click',()=>{$$('#'+id+' .chip').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')}))}
 const chosen=id=>$('#'+id+' .selected')?.dataset.value||'any';
-$('#continue').addEventListener('click',()=>{if(!/^\d{5}$/.test($('#zip').value.trim())&&!geo){alert('Please enter a valid 5-digit US ZIP code or use your location.');return}if(mode==='spin'||mode==='browse'||+$('#hangry-range').value>=5)search();else show('quiz')});
+$('#continue').addEventListener('click',()=>{
+ if(!/^\d{5}$/.test($('#zip').value.trim())&&!geo){alert('Please enter a valid 5-digit US ZIP code or use your location.');return}
+ if(mode==='date'){show('chemistry-player1');return}
+ if(mode==='spin'||mode==='browse'||+$('#hangry-range').value>=5)search();else show('quiz');
+});
 $('#find').addEventListener('click',search);
+$('#chemistry-next').addEventListener('click',()=>show('chemistry-player2'));
+$('#chemistry-find').addEventListener('click',search);
+$('#chemistry-back1').addEventListener('click',()=>show('chemistry-player1'));
 $('#locate').addEventListener('click',()=>{if(!navigator.geolocation){alert('Location is not supported on this device.');return}navigator.geolocation.getCurrentPosition(p=>{geo={lat:p.coords.latitude,lon:p.coords.longitude,label:'Your location'};$('#zip').value='';alert('Location ready!')},()=>alert('Location permission was unavailable. You can enter a ZIP code instead.'),{timeout:12000})});
 function haversine(a,b,c,d){const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,z=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z))}
 function cuisineFor(tags){const raw=[tags.cuisine||'',tags.name||'',tags['name:en']||'',tags.amenity||''].join(' ').toLowerCase();if(tags.amenity==='fast_food')return 'fast_food';for(const [,,id] of categories){const words={burger:['burger','hamburger'],mexican:['mexican','taco','burrito'],chicken:['chicken','wings'],steak:['steak','steakhouse'],sandwich:['sandwich','sub'],salad:['salad','healthy'],breakfast:['breakfast','brunch','pancake'],seafood:['seafood','fish'],sushi:['sushi','japanese'],chinese:['chinese'],pizza:['pizza'],italian:['italian','pasta'],indian:['indian'],thai:['thai']}[id]||[];if(words.some(w=>raw.includes(w)))return id}return 'other'}
@@ -27,22 +67,47 @@ function cacheRead(key){try{const obj=JSON.parse(localStorage.getItem(SEARCH_CAC
 function cacheWrite(key,elements){try{let obj=JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY)||'{}');obj[key]={saved:Date.now(),elements};const keys=Object.keys(obj).sort((a,b)=>obj[b].saved-obj[a].saved).slice(0,8);obj=Object.fromEntries(keys.map(k=>[k,obj[k]]));localStorage.setItem(SEARCH_CACHE_KEY,JSON.stringify(obj))}catch(e){console.warn('Restaurant cache unavailable:',e)}}
 function progress(message){const el=$('#loading-text');if(el)el.textContent=message}
 function getRestaurantsFromData(data,point,miles){
- const seen=new Set();return (data.elements||[]).map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!excluded.has(r.type)&&!excluded2.has(r.type)});
+ const seen=new Set();return (data.elements||[]).map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!(mode==='quiz'&&soloExcluded.has(r.type))&&!(mode==='date'&&excluded.has(r.type))&&!(mode==='date'&&excluded2.has(r.type))});
 }
 function presentResults(data,point,miles){
  restaurants=getRestaurantsFromData(data,point,miles);
- if(mode==='quiz'||mode==='date'){
-  const fries=chosen('fries'),vibe=chosen('vibe');
+ if(mode==='quiz'){
+  const fries=chosen('solo-fries'),vibe=chosen('solo-vibe');
   if(fries==='yes')restaurants=restaurants.filter(r=>hasFries(r.name));
   if(fries==='no')restaurants=restaurants.filter(r=>!hasFries(r.name));
   if(vibe==='fast')restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food');
   if(vibe==='sit')restaurants=restaurants.filter(r=>r.tags.amenity==='restaurant');
  }
+ if(mode==='date'){
+  // Both players' vetoes are applied independently; a restaurant must satisfy both.
+  restaurants=restaurants.filter(r=>{
+   const preferences=[['fries','vibe'],['fries2','vibe2']];
+   return preferences.every(([friesId,vibeId])=>{
+    const fries=chosen(friesId),vibe=chosen(vibeId);
+    return (fries==='any'||(fries==='yes'?hasFries(r.name):!hasFries(r.name)))&&
+     (vibe==='any'||(vibe==='fast'?r.tags.amenity==='fast_food':r.tags.amenity==='restaurant'));
+   });
+  });
+ }
  restaurants.sort((a,b)=>a.miles-b.miles);
  if(+$('#hangry-range').value>=4)restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);
  if(!restaurants.length){show('search-error');$('#error-message').textContent='The search returned restaurants, but none matched your current filters. Try fewer exclusions or a different preference.';return}
- restaurants=restaurants.slice(0,80);rejected.clear();locked.clear();rejectionHistory=[];prepareWheel();show(['browse','quiz','date'].includes(mode)?'all':'wheel-screen');
+ rejected.clear();locked.clear();rejectionHistory=[];prepareWheel();if(mode==='date')showChemistryResults();else show(['browse','quiz'].includes(mode)?'all':'wheel-screen');
 }
+function showChemistryResults(){
+ const ids=categories.map(c=>c[2]);
+ const common=ids.filter(id=>!excluded.has(id)&&!excluded2.has(id));
+ const union=ids.filter(id=>!excluded.has(id)||!excluded2.has(id));
+ const percent=union.length?Math.round(100*common.length/union.length):0;
+ $('#chemistry-score').textContent=`${percent}%`;
+ $('#chemistry-explain').textContent=`${common.length} cuisines neither person vetoed, out of ${union.length} cuisines at least one person would consider. This is a preference-overlap score, not a prediction of how much you'll enjoy a restaurant.`;
+ $('#chemistry-count').textContent=`${restaurants.length} nearby restaurants satisfy both players' selected restrictions.`;
+ $('#chemistry-results').classList.remove('hidden');
+ show('chemistry-results-screen');
+}
+$('#chemistry-see-all').addEventListener('click',()=>show('all'));
+$('#chemistry-spin').addEventListener('click',()=>show('wheel-screen'));
+$('#back-from-all').addEventListener('click',()=>show(mode==='date'?'chemistry-results-screen':'wheel-screen'));
 // Version 1.2.5: independent, uncapped requests; no timer aborts.
 let activeSearchControllers=[];
 function stopActiveRequests(){activeSearchControllers.forEach(c=>c.abort());activeSearchControllers=[];}
@@ -113,15 +178,15 @@ async function search(){
 const cancelSearch=()=>{searchGeneration++;stopActiveRequests();show('setup')};
 $('#cancel-search')?.addEventListener('click',cancelSearch);
 
-let wheelItems=[];const rejected=new Set(),locked=new Set();let rejectionHistory=[];
+let wheelItems=[];let wheelTargetSize=8;const rejected=new Set(),locked=new Set();let rejectionHistory=[];
 const colors=['#e65a31','#144e73','#c23750','#f0a53a','#147e79','#754bb5','#c64a27','#2e6090'];
 const eligible=()=>restaurants.filter(r=>!rejected.has(r.id));
 function updateWheelStatus(){const n=eligible().length;$('#match-title').textContent=`${n} restaurants in the running!`;$('#match-note').textContent=`${wheelItems.length} on the wheel • ${restaurants.length} total matches • ${rejected.size} rejected`;$('#all-count').textContent=`${restaurants.length} nearby matches`;$('#wheel-status').textContent=`🔒 ${locked.size} locked · 🚫 ${rejected.size} rejected · ${n} eligible. No new restaurant search needed.`;$('#spin').disabled=spinning||!wheelItems.length;$('#wheel-undo').classList.toggle('hidden',!rejectionHistory.length);}
-function shuffleWheel(){const keep=wheelItems.filter(r=>locked.has(r.id)&&!rejected.has(r.id)).slice(0,8);const pool=eligible().filter(r=>!keep.some(k=>k.id===r.id));for(let i=pool.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1));[pool[i],pool[k]]=[pool[k],pool[i]];}wheelItems=[...keep,...pool.slice(0,8-keep.length)];rotation=0;drawWheel();renderContenders();updateWheelStatus();}
-function prepareWheel(){shuffleWheel();renderPlaces('#all-list',restaurants)}
+function shuffleWheel(){const keep=wheelItems.filter(r=>locked.has(r.id)&&!rejected.has(r.id)).slice(0,8);const pool=eligible().filter(r=>!keep.some(k=>k.id===r.id));for(let i=pool.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1));[pool[i],pool[k]]=[pool[k],pool[i]];}wheelItems=[...keep,...pool.slice(0,Math.max(0,wheelTargetSize-keep.length))];rotation=0;drawWheel();renderContenders();updateWheelStatus();}
+function prepareWheel(){wheelTargetSize=8;shuffleWheel();renderPlaces('#all-list',restaurants)}
 function renderContenders(){const el=$('#contenders');el.innerHTML=wheelItems.map(r=>`<div class="contender-row"><div><strong>${escapeHtml(r.name)}</strong><small>📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</small></div><div class="contender-actions"><button class="result-btn lock-choice" data-id="${escapeHtml(r.id)}" aria-label="${locked.has(r.id)?'Unlock':'Lock'} ${escapeHtml(r.name)}">${locked.has(r.id)?'🔒 Locked':'🔓 Lock'}</button><button class="result-btn remove-choice" data-id="${escapeHtml(r.id)}" aria-label="Remove ${escapeHtml(r.name)}">✕ Remove</button></div></div>`).join('')||'<p class="muted">No contenders left. Reset rejected restaurants to try again.</p>';
 el.querySelectorAll('.lock-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.has(id)?locked.delete(id):locked.add(id);renderContenders();updateWheelStatus()}));
-el.querySelectorAll('.remove-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);const replacement=eligible().find(r=>!wheelItems.some(w=>w.id===r.id));if(replacement)wheelItems.push(replacement);rotation=0;drawWheel();renderContenders();updateWheelStatus()}));}
+el.querySelectorAll('.remove-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);wheelTargetSize=wheelItems.length;rotation=0;drawWheel();renderContenders();updateWheelStatus()}));}
 function drawWheel(){const c=$('#wheel'),ctx=c.getContext('2d'),n=wheelItems.length;if(!n)return;const cx=320,cy=320,r=290;ctx.clearRect(0,0,640,640);ctx.save();ctx.translate(cx,cy);ctx.rotate(rotation);for(let i=0;i<n;i++){const a=-Math.PI/2+i*2*Math.PI/n,b=a+2*Math.PI/n;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,a,b);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();ctx.strokeStyle='#ffd37c';ctx.lineWidth=3;ctx.stroke();ctx.save();ctx.rotate(a+Math.PI/n);ctx.translate(r*.65,0);ctx.rotate(Math.PI/2);ctx.fillStyle='#fff';ctx.font='bold 22px system-ui';ctx.textAlign='center';ctx.shadowColor='#000';ctx.shadowBlur=4;let name=wheelItems[i].name;while(ctx.measureText(name).width>160&&name.length>5)name=name.slice(0,-2)+'…';ctx.fillText(name,0,7);ctx.restore()}ctx.beginPath();ctx.arc(0,0,r+7,0,Math.PI*2);ctx.strokeStyle='#ffbe57';ctx.lineWidth=15;ctx.shadowColor='#ff9c31';ctx.shadowBlur=24;ctx.stroke();ctx.restore()}
 $('#spin').addEventListener('click',()=>{if(spinning||!wheelItems.length)return;spinning=true;$('#spin').disabled=true;const start=rotation,delta=(Math.PI*2)*(5+Math.random()*3),duration=4700,t0=performance.now();function frame(now){const t=Math.min(1,(now-t0)/duration),ease=1-Math.pow(1-t,4);rotation=start+delta*ease;drawWheel();if(t<1)requestAnimationFrame(frame);else{spinning=false;$('#spin').disabled=false;const n=wheelItems.length,step=2*Math.PI/n,angle=(((-rotation)% (2*Math.PI))+(2*Math.PI))%(2*Math.PI);winner=wheelItems[Math.floor(angle/step)%n];renderWinner();show('winner')}}requestAnimationFrame(frame)});
 function safeWebsite(r){const raw=r.tags.website||r.tags['contact:website']||r.tags['website:menu']||'';try{const u=new URL(raw);return ['https:','http:'].includes(u.protocol)?u.href:null}catch{return null}}
@@ -135,13 +200,14 @@ $('#reject-winner').addEventListener('click',()=>{if(!winner)return;const id=win
 $('#wheel-undo').addEventListener('click',()=>$('#undo-reject').click());
 $('#undo-reject').addEventListener('click',()=>{const id=rejectionHistory.pop();if(!id)return;rejected.delete(id);const r=restaurants.find(x=>x.id===id);if(r&&!wheelItems.some(x=>x.id===id)){if(wheelItems.length>=8){const idx=wheelItems.findIndex(x=>!locked.has(x.id));if(idx>=0)wheelItems.splice(idx,1);}if(wheelItems.length<8)wheelItems.push(r);}rotation=0;drawWheel();renderContenders();updateWheelStatus();$('#undo-reject').classList.toggle('hidden',!rejectionHistory.length);show('wheel-screen')});
 $('#reset-rejected').addEventListener('click',()=>{rejected.clear();rejectionHistory=[];shuffleWheel()});
+$('#reset-wheel').addEventListener('click',()=>{wheelTargetSize=8;shuffleWheel()});
 function renderPlaces(target,arr){$(target).innerHTML=arr.map(r=>{
 const query=encodeURIComponent(r.name+' '+r.lat+','+r.lon);
 const menu=r.tags.website||r.tags['contact:website']||'';
 const safeMenu=/^https?:\/\//i.test(menu)?menu:'';
 const emoji=({burger:'🍔',pizza:'🍕',mexican:'🌮',chicken:'🍗',italian:'🍝',chinese:'🥡',sushi:'🍣',steak:'🥩',sandwich:'🥪',salad:'🥗',indian:'🍛',thai:'🍜',breakfast:'🍳',fast_food:'🍟',seafood:'🦐',other:'🍽️'})[r.type]||'🍽️';
 return `<article class="result-card"><div class="result-art" aria-hidden="true">${emoji}</div><div class="result-body"><strong>${escapeHtml(r.name)}</strong><span class="result-meta">📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</span><span class="result-address">${escapeHtml(r.address)}</span><div class="result-actions"><a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query=${query}">📍 Directions</a>${safeMenu?`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="${escapeHtml(safeMenu)}">📖 Website / Menu</a>`:`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q=${encodeURIComponent(r.name+' menu near '+r.address)}">📖 Find Menu</a>`}<button class="result-btn add-wheel" data-wheel="${escapeHtml(r.id)}">🎡 Add to wheel</button></div></div></article>`}).join('')||'<p class="muted">No matches found.</p>';
-$$(`${target} .add-wheel`).forEach(b=>b.addEventListener('click',()=>{const r=restaurants.find(x=>x.id===b.dataset.wheel);if(!r)return;if(rejected.has(r.id)){rejected.delete(r.id);rejectionHistory=rejectionHistory.filter(x=>x!==r.id)}if(!wheelItems.some(x=>x.id===r.id)){if(wheelItems.length>=8){const i=wheelItems.findIndex(x=>!locked.has(x.id));if(i<0){alert("All eight contenders are locked. Unlock one to add another.");return}wheelItems.splice(i,1)}wheelItems.push(r)}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen')}));}
+$$(`${target} .add-wheel`).forEach(b=>b.addEventListener('click',()=>{const r=restaurants.find(x=>x.id===b.dataset.wheel);if(!r)return;if(rejected.has(r.id)){rejected.delete(r.id);rejectionHistory=rejectionHistory.filter(x=>x!==r.id)}if(!wheelItems.some(x=>x.id===r.id)){if(wheelItems.length>=8){const i=wheelItems.findIndex(x=>!locked.has(x.id));if(i<0){alert("All eight contenders are locked. Unlock one to add another.");return}wheelItems.splice(i,1)}wheelItems.push(r);wheelTargetSize=wheelItems.length}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen')}));}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function renderSaved(){const a=favorites();$('#saved-list').innerHTML=a.map(r=>`<div class="place"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.address)}</small></div><button class="remove" data-id="${escapeHtml(r.id)}" title="Remove favorite">♥</button></div>`).join('')||'<div class="card"><p class="muted">No favorites yet. Spin the wheel and save a winner!</p></div>';$$('.remove').forEach(b=>b.addEventListener('click',()=>{saveFavorites(favorites().filter(x=>x.id!==b.dataset.id));renderSaved()}))}
 
