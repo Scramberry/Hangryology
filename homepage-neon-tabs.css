@@ -1,0 +1,39 @@
+/* V1.4.7: neon border-integrated tabs; HTML headings stay accessible. */
+#home .home-meter,#home .home-how,#home .home-cuisines {position:relative;isolation:isolate;overflow:visible;border-top:2px solid #139bdb;background-clip:padding-box}
+#home .home-meter {margin-top:35px!important;padding-top:90px!important}
+#home .home-meter .meter-inner {position:static!important}
+#home .home-how {margin-top:46px!important;padding-top:95px!important}
+#home .home-cuisines {margin-top:46px!important;padding-top:90px!important}
+#home .home-meter .meter-inner h2,#home .home-how>h2,#home .home-cuisines>h2 {
+ position:absolute!important;top:0!important;left:50%!important;right:auto!important;bottom:auto!important;
+ transform:translate(-50%,-50%)!important;margin:0!important;
+ width:max-content!important;max-width:calc(100% - 110px)!important;
+ padding:13px clamp(28px,3.5vw,68px)!important;
+ border:2px solid #29baff!important;border-radius:0!important;
+ clip-path:polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%)!important;
+ background:linear-gradient(180deg,#0b3556 0%,#04152c 55%,#061d35 100%)!important;
+ box-shadow:0 0 0 3px #001b32,0 0 17px #1ab8ffb8,inset 0 0 17px #1bb8ff44!important;
+ color:#f6faff;text-align:center!important;white-space:nowrap!important;line-height:1.15!important;
+ font-size:clamp(24px,3vw,48px)!important;z-index:15!important;
+}
+/* Circuit traces emerging from the tab and merging with the section border. */
+#home .home-meter .meter-inner h2::before,#home .home-how>h2::before,#home .home-cuisines>h2::before,
+#home .home-meter .meter-inner h2::after,#home .home-how>h2::after,#home .home-cuisines>h2::after {
+ content:'';position:absolute;top:50%;width:clamp(35px,8vw,155px);height:7px;
+ border-top:2px solid #2ac6ff;border-bottom:1px solid #ff913c;
+ background:linear-gradient(90deg,#0b8bff55,#ff8a3a55);filter:drop-shadow(0 0 7px #1abfff);
+ pointer-events:none;z-index:1;
+}
+#home .home-meter .meter-inner h2::before,#home .home-how>h2::before,#home .home-cuisines>h2::before {right:97%;transform:translateY(-50%)}
+#home .home-meter .meter-inner h2::after,#home .home-how>h2::after,#home .home-cuisines>h2::after {left:97%;transform:translateY(-50%)}
+#home .home-meter .meter-inner h2 em,#home .home-how>h2 em,#home .home-cuisines>h2 em {color:#ff8d37}
+#home .home-how .how-flow-line {pointer-events:none}
+@media(max-width:700px){
+ #home .home-meter,#home .home-how,#home .home-cuisines {margin-top:32px!important;padding-top:68px!important}
+ #home .home-meter .meter-inner h2,#home .home-how>h2,#home .home-cuisines>h2 {
+  max-width:calc(100% - 34px)!important;font-size:clamp(17px,5.3vw,29px)!important;
+  padding:12px clamp(15px,3vw,25px)!important;
+ }
+ #home .home-meter .meter-inner h2::before,#home .home-how>h2::before,#home .home-cuisines>h2::before,
+ #home .home-meter .meter-inner h2::after,#home .home-how>h2::after,#home .home-cuisines>h2::after {width:22px}
+}
