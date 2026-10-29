@@ -1,0 +1,38 @@
+/* Hangryology V1.4.13 — single cinematic lab atmosphere, home only. */
+/* The image is attached to the homepage itself; all content stays above it. */
+#home {
+  position:relative;
+  isolation:isolate;
+  background:#051a2c;
+}
+#home::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background-image:
+    linear-gradient(180deg,rgba(3,19,34,.80) 0%,rgba(3,19,34,.71) 28%,rgba(3,19,34,.74) 65%,rgba(3,19,34,.88) 100%),
+    url("hangryology-lab-background-v1413.webp");
+  background-repeat:no-repeat,no-repeat;
+  background-position:center,center top;
+  background-size:100% 100%,100% 100%;
+}
+/* Make section surfaces translucent only on the homepage, leaving interactive content intact. */
+#home .home-meter,
+#home .home-experiments-wrap,
+#home .home-experiments,
+#home .home-how,
+#home .home-cuisines {
+  background-color:transparent!important;
+  background-image:none!important;
+}
+/* Keep illustrations and controls in front of the atmospheric layer. */
+#home .home-meter > *,
+#home .home-experiments-wrap > *,
+#home .home-how > *,
+#home .home-cuisines > * {position:relative;z-index:1;}
+/* Mobile keeps the full-height background without fixed attachment or parallax. */
+@media(max-width:700px){
+ #home::before{background-position:center,center top;background-size:100% 100%,auto 100%;opacity:.82;}
+}
