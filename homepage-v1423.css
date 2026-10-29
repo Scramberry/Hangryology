@@ -1,0 +1,25 @@
+/* V1.4.23: move the meter heading onto the real section divider. */
+#home .home-meter{position:relative!important;isolation:isolate!important;}
+#home .home-meter>.meter-heading{
+ position:absolute!important;top:0!important;left:50%!important;right:auto!important;
+ transform:translate(-50%,-50%)!important;margin:0!important;
+ width:max-content!important;max-width:calc(100% - 24px)!important;
+ text-align:center!important;z-index:10!important;
+}
+/* The heading is now a direct child of the section, not the right column.
+   Keep the cyan line behind the centered heading. */
+#home .home-meter::before{z-index:5!important;}
+@media(min-width:901px){
+ #home .home-meter{min-height:590px!important;}
+ #home .home-meter .meter-inner{min-height:590px!important;padding-top:130px!important;}
+}
+@media(min-width:651px) and (max-width:900px){
+ #home .home-meter{min-height:570px!important;}
+ #home .home-meter .meter-inner{min-height:570px!important;padding-top:125px!important;}
+}
+#home .home-meter .meter-sidekicks{bottom:0!important;top:0!important;height:100%!important;object-position:left bottom!important;}
+/* Maintain the existing spacing of experiments, how-it-works and cuisines. */
+@media(max-width:650px){
+ #home .home-meter>.meter-heading{top:0!important;left:50%!important;transform:translate(-50%,-50%)!important;}
+ #home .home-meter .meter-inner{padding-top:90px!important;}
+}
