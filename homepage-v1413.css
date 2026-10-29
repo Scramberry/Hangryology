@@ -1,38 +1,46 @@
-/* Hangryology V1.4.13 — single cinematic lab atmosphere, home only. */
-/* The image is attached to the homepage itself; all content stays above it. */
-#home {
-  position:relative;
-  isolation:isolate;
-  background:#051a2c;
+/* Hangryology 1.4.14 — FIX: render the lab behind homepage content, not behind an opaque container. */
+/* Older homepage-v1411.css set an opaque !important background on cinematic-home. */
+#home { position:relative!important; isolation:isolate; background:#041a2c!important; }
+#home .cinematic-home {
+  position:relative!important;
+  isolation:isolate!important;
+  background:transparent!important;
 }
-#home::before {
+/* Place artwork on the actual content container. Its height follows the entire homepage. */
+#home .cinematic-home::before {
   content:"";
   position:absolute;
   inset:0;
-  z-index:-1;
+  z-index:0;
   pointer-events:none;
   background-image:
-    linear-gradient(180deg,rgba(3,19,34,.80) 0%,rgba(3,19,34,.71) 28%,rgba(3,19,34,.74) 65%,rgba(3,19,34,.88) 100%),
+    linear-gradient(180deg,rgba(3,18,32,.60),rgba(3,18,32,.46) 36%,rgba(3,18,32,.50) 72%,rgba(3,18,32,.70)),
     url("hangryology-lab-background-v1413.webp");
   background-repeat:no-repeat,no-repeat;
-  background-position:center,center top;
+  background-position:center top,center top;
   background-size:100% 100%,100% 100%;
+  opacity:.82;
 }
-/* Make section surfaces translucent only on the homepage, leaving interactive content intact. */
+/* Disable the old behind-the-home pseudo-element; it was obscured. */
+#home::before { content:none!important; }
+/* Content stays above the lab. The existing hero keeps its own beautiful imagery. */
+#home .cinematic-home > * { position:relative; z-index:1; }
+/* Remove opaque backgrounds from the large homepage sections, including old !important gradients. */
 #home .home-meter,
 #home .home-experiments-wrap,
 #home .home-experiments,
 #home .home-how,
+#home .home-how.how-lab-v149,
 #home .home-cuisines {
+  background:transparent!important;
   background-color:transparent!important;
   background-image:none!important;
 }
-/* Keep illustrations and controls in front of the atmospheric layer. */
-#home .home-meter > *,
-#home .home-experiments-wrap > *,
-#home .home-how > *,
-#home .home-cuisines > * {position:relative;z-index:1;}
-/* Mobile keeps the full-height background without fixed attachment or parallax. */
-@media(max-width:700px){
- #home::before{background-position:center,center top;background-size:100% 100%,auto 100%;opacity:.82;}
+/* Do not touch the interior cards, their buttons, the hero, or the neon header tabs. */
+@media (max-width:700px) {
+  #home .cinematic-home::before {
+    background-size:100% 100%,auto 100%;
+    background-position:center top,center top;
+    opacity:.62;
+  }
 }
