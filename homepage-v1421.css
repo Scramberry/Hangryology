@@ -1,0 +1,67 @@
+/* Hangryology 1.4.21 — targeted visual corrections, no search or meter logic changes */
+/* Hero: shift the duo right, with navy on the left fading naturally into the scene. */
+#home .home-hero{background:#03182d!important}
+#home .home-hero .hero-duo{
+ inset:auto 0 0 auto!important;top:0!important;right:0!important;left:auto!important;
+ width:82%!important;height:100%!important;object-fit:cover!important;
+ object-position:52% 50%!important;z-index:0!important;
+ -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 20%,#000 100%)!important;
+ mask-image:linear-gradient(to right,transparent 0%,#000 20%,#000 100%)!important;
+}
+#home .home-hero::after{
+ background:linear-gradient(90deg,#03182d 0%,rgba(3,24,45,.98) 16%,rgba(3,24,45,.80) 34%,rgba(3,24,45,.26) 53%,transparent 74%)!important;
+}
+#home .home-hero .hero-copy{width:min(51%,760px)!important}
+/* Meter: restore proper vertical flow so the heading, slider, five heads, and status don't collide. */
+#home .home-meter{min-height:650px!important;display:block!important;padding:34px 3vw 58px!important;box-sizing:border-box!important}
+#home .home-meter .meter-sidekicks{
+ display:block!important;position:absolute!important;top:0!important;bottom:0!important;left:0!important;
+ height:100%!important;width:39%!important;max-height:none!important;
+ object-fit:cover!important;object-position:25% bottom!important;
+}
+#home .home-meter .meter-inner{
+ box-sizing:border-box!important;position:relative!important;z-index:2!important;
+ width:61%!important;margin:0 0 0 39%!important;padding:0 2vw 0 0!important;
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+}
+#home .home-meter .meter-inner>h2{
+ box-sizing:border-box!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;
+ transform:none!important;align-self:center!important;display:block!important;
+ margin:18px auto 62px!important;max-width:100%!important;
+ text-align:center!important;z-index:3!important;
+}
+#home .home-meter .meter-bar{position:relative!important;z-index:2!important;margin:0 0 30px!important;width:100%!important}
+#home .home-meter .meter-labels{width:100%!important;position:relative!important;margin:0 0 30px!important;justify-content:space-between!important}
+#home .home-meter .meter-response{position:relative!important;margin:10px auto 0!important;text-align:center!important}
+#home .home-meter #hangry-action-explainer{margin:10px auto 0!important;text-align:center!important}
+/* Cuisines: restore tab centered on its glowing rule; retain the closer panorama. */
+#home .home-cuisines{position:relative!important;padding-top:70px!important}
+#home .home-cuisines>h2{
+ display:table!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;
+ transform:none!important;width:max-content!important;max-width:calc(100% - 32px)!important;
+ margin:0 auto 0!important;text-align:center!important;z-index:6!important;
+}
+#home .home-cuisines::after{top:125px!important}
+#home .home-cuisines>.cuisine-panorama-crop{margin-top:-8px!important}
+@media(max-width:900px){
+ #home .home-hero .hero-duo{width:90%!important;object-position:57% center!important}
+ #home .home-hero .hero-copy{width:59%!important}
+ #home .home-meter{min-height:600px!important}
+ #home .home-meter .meter-sidekicks{width:30%!important}
+ #home .home-meter .meter-inner{width:70%!important;margin-left:30%!important}
+ #home .home-meter .meter-inner>h2{margin-bottom:50px!important}
+}
+@media(max-width:650px){
+ #home .home-hero .hero-duo{width:100%!important;object-position:64% bottom!important;
+  -webkit-mask-image:none!important;mask-image:none!important}
+ #home .home-hero::after{background:linear-gradient(to bottom,#03182d 0%,rgba(3,24,45,.90) 35%,rgba(3,24,45,.36) 66%,transparent 100%)!important}
+ #home .home-hero .hero-copy{width:100%!important}
+ #home .home-meter{min-height:0!important;padding:26px 12px 55px!important}
+ #home .home-meter .meter-sidekicks{display:none!important}
+ #home .home-meter .meter-inner{width:100%!important;margin:0!important;padding:0!important}
+ #home .home-meter .meter-inner>h2{margin:12px auto 38px!important}
+ #home .home-meter .meter-bar{margin-bottom:22px!important}
+ #home .home-meter .meter-labels{margin-bottom:22px!important}
+ #home .home-cuisines{padding-top:48px!important}
+ #home .home-cuisines::after{top:103px!important}
+}
