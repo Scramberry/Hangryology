@@ -1,0 +1,32 @@
+/* V1.4.24: Match the HOW IT WORKS tab; remove the duplicate experiments rule. */
+#home .home-meter{position:relative!important;isolation:isolate!important;}
+/* Use the same centered angular tab treatment as the other section headers. */
+#home .home-meter>.meter-heading{
+  box-sizing:border-box!important;
+  position:absolute!important;
+  top:0!important;left:50%!important;right:auto!important;
+  transform:translate(-50%,-50%)!important;
+  display:block!important;
+  width:max-content!important;max-width:calc(100% - 24px)!important;
+  margin:0!important;padding:20px clamp(30px,4vw,72px)!important;
+  background:linear-gradient(115deg,#04243d,#092f4d 50%,#06223b)!important;
+  border:2px solid #12baff!important;border-right-color:#ff9b43!important;
+  clip-path:polygon(8% 0,92% 0,100% 50%,92% 100%,8% 100%,0 50%)!important;
+  filter:drop-shadow(0 0 12px rgba(0,179,255,.38))!important;
+  text-align:center!important;font-weight:900!important;z-index:15!important;
+}
+/* One horizontal divider passing through the midpoint of the header. */
+#home .home-meter::before{
+  content:""!important;position:absolute!important;top:0!important;
+  left:0!important;right:0!important;height:2px!important;
+  background:linear-gradient(90deg,transparent,#12baff 7%,#14c8ff 50%,#ff9a39 93%,transparent)!important;
+  box-shadow:0 0 12px #00baff!important;z-index:3!important;pointer-events:none!important;
+}
+/* Earlier 1.4.22 added an unintended SECOND line above Running Food Experiments.
+   Remove that one; the normal experiments divider (::after) stays in place. */
+#home .home-experiments-wrap::before{content:none!important;display:none!important;}
+#home .home-experiments-wrap{border-top:0!important;}
+@media(max-width:650px){
+ #home .home-meter>.meter-heading{padding:12px 22px!important;font-size:clamp(19px,5vw,34px)!important;}
+ #home .home-meter .meter-inner{padding-top:100px!important;}
+}
