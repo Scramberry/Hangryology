@@ -1,0 +1,108 @@
+/* Hangryology 1.4.17 — restore breathing room and soft station halos.
+   Overrides 1.4.16 only; no JavaScript or image replacements. */
+#home .home-experiments-wrap{
+  padding:30px 0 90px!important;
+  margin:0!important;
+  overflow:visible!important;
+}
+#home .home-experiments{
+  padding:45px clamp(16px,2vw,38px) 45px!important;
+  gap:clamp(18px,2vw,36px)!important;
+  align-items:stretch!important;
+}
+#home .home-experiments .experiment{
+  position:relative!important;
+  isolation:isolate!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  overflow:visible!important;
+  padding:0 0 15px!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  min-height:490px!important;
+}
+#home .home-experiments .experiment::before{
+  content:""!important;
+  position:absolute!important;
+  z-index:-1!important;
+  left:-10%!important;
+  right:-10%!important;
+  top:4%!important;
+  height:80%!important;
+  border-radius:50%!important;
+  pointer-events:none!important;
+  background:radial-gradient(ellipse at 50% 46%,
+    rgba(6,39,69,.80) 0%,rgba(8,48,82,.52) 35%,
+    rgba(5,30,54,.19) 66%,transparent 83%)!important;
+  filter:blur(18px)!important;
+}
+#home .home-experiments .experiment:nth-child(1)::before{
+ background:radial-gradient(ellipse,rgba(0,127,211,.26),rgba(6,41,72,.48) 45%,transparent 80%)!important;
+}
+#home .home-experiments .experiment:nth-child(2)::before{
+ background:radial-gradient(ellipse,rgba(255,128,36,.18),rgba(8,41,66,.50) 45%,transparent 80%)!important;
+}
+#home .home-experiments .experiment:nth-child(3)::before{
+ background:radial-gradient(ellipse,rgba(157,54,231,.23),rgba(8,41,66,.49) 45%,transparent 80%)!important;
+}
+#home .home-experiments .experiment:nth-child(4)::before{
+ background:radial-gradient(ellipse,rgba(28,203,129,.18),rgba(8,41,66,.49) 45%,transparent 80%)!important;
+}
+#home .home-experiments .experiment>img{
+  width:112%!important;
+  margin-left:-6%!important;
+  height:clamp(250px,20vw,345px)!important;
+  object-fit:contain!important;
+  flex-shrink:0!important;
+  mix-blend-mode:normal!important;
+  filter:saturate(1.08) brightness(1.04) drop-shadow(0 12px 15px rgba(0,0,0,.18))!important;
+}
+#home .home-experiments .experiment-copy{
+  margin-top:18px!important;
+  padding:0 10px 15px!important;
+  flex:1!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:14px!important;
+  justify-content:flex-start!important;
+}
+#home .home-experiments .experiment-copy strong{
+  min-height:2.15em!important;
+}
+#home .home-experiments .experiment-copy small{
+  min-height:2.5em!important;
+  text-shadow:0 2px 7px #031425!important;
+}
+#home .home-experiments .experiment-copy b{
+  margin-top:auto!important;
+  position:relative!important;
+  z-index:1!important;
+}
+#home .home-how.how-lab-v149{
+  padding-top:125px!important;
+  padding-bottom:75px!important;
+  margin-top:0!important;
+}
+#home .home-how.how-lab-v149 h2{
+  margin:0 auto 52px!important;
+  position:relative!important;
+  z-index:2!important;
+}
+#home .home-how.how-lab-v149 .how-panorama{margin-top:0!important}
+@media(max-width:900px){
+  #home .home-experiments-wrap{padding-bottom:70px!important}
+  #home .home-experiments .experiment{min-height:460px!important}
+  #home .home-how.how-lab-v149{padding-top:105px!important}
+  #home .home-how.how-lab-v149 h2{margin:0 auto 40px!important}
+}
+@media(max-width:650px){
+  #home .home-experiments-wrap{padding:25px 0 70px!important}
+  #home .home-experiments{padding:28px 14px 35px!important;gap:30px 14px!important}
+  #home .home-experiments .experiment{min-height:340px!important}
+  #home .home-experiments .experiment>img{height:clamp(160px,39vw,245px)!important}
+  #home .home-experiments .experiment-copy{margin-top:8px!important;padding:0 4px 12px!important;gap:10px!important}
+  #home .home-how.how-lab-v149{padding-top:85px!important}
+  #home .home-how.how-lab-v149 h2{margin:0 auto 30px!important}
+}
