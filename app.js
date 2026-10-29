@@ -24,8 +24,6 @@ function resetExperiment(){
  $('#quiz-player1').classList.toggle('hidden',mode==='date');
  $('#quiz-solo').classList.toggle('hidden',mode==='date');
  $('#player2').classList.add('hidden');
- $('#chemistry-step2').classList.add('hidden');
- $('#chemistry-step1').classList.remove('hidden');
  $('#continue').textContent=mode==='date'?'Continue to Player 1 →':'Continue →';
 }
 function enterMode(next){mode=next;resetExperiment();show('setup')}
