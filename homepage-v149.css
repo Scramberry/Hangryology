@@ -1,0 +1,53 @@
+/* V1.4.9: only experiment hub art and How It Works. Existing JS untouched. */
+#home .home-experiments .experiment {overflow:hidden;}
+#home .home-experiments .experiment>img {
+ display:block; width:100%; height:clamp(235px,19vw,320px);
+ object-fit:contain; object-position:center;
+ padding:7px 7px 0; box-sizing:border-box;
+ -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 5%,#000 86%,transparent 100%);
+ mask-image:linear-gradient(to bottom,transparent 0%,#000 5%,#000 86%,transparent 100%);
+ filter:saturate(1.08) brightness(1.07);
+}
+#home .home-experiments .experiment-copy{margin-top:0;}
+#home .how-lab-v149 {position:relative; isolation:isolate; overflow:visible;
+ background:linear-gradient(180deg,#051c30 0%,#06263d 48%,#051a2e 100%);
+ padding:105px 0 75px; border-top:1px solid #17c8ff70; border-bottom:1px solid #17c8ff35;
+}
+#home .how-lab-v149 .how-flow-line{display:none!important}
+#home .how-lab-v149 h2{position:relative;z-index:2;margin:-160px auto 65px;}
+#home .how-lab-v149 .how-panorama{
+ width:100%; aspect-ratio:2172/410; margin:0 auto;
+ background-image:url('how-lab-panorama-v149.webp'); background-size:100% 100%; background-position:center;
+ -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 3%,#000 97%,transparent 100%);
+ mask-image:linear-gradient(to right,transparent 0%,#000 3%,#000 97%,transparent 100%);
+}
+#home .how-lab-v149 .how-labels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));max-width:1800px;margin:0 auto;padding:0 20px;gap:14px;text-align:center}
+#home .how-lab-v149 .how-label{display:flex;align-items:center;flex-direction:column;gap:9px;min-width:0}
+#home .how-lab-v149 .how-badge{display:grid;place-items:center;width:35px;height:35px;border-radius:50%;background:#ff903a;color:#061526;font-size:19px;font-weight:900;box-shadow:0 0 15px #ff923b88}
+#home .how-lab-v149 .how-label strong{font-size:clamp(13px,1.35vw,22px);font-weight:900;color:#f6fbff;line-height:1.2;text-shadow:0 1px 9px #0d78a955}
+#home .how-lab-v149 .how-label strong:after{content:'';display:block;width:48px;height:3px;margin:12px auto 0;border-radius:4px;background:#ff933c;box-shadow:0 0 10px #ff933c}
+@media(max-width:750px){
+ #home .home-experiments .experiment>img{height:clamp(170px,30vw,260px)}
+ #home .how-lab-v149{padding:75px 0 50px}
+ #home .how-lab-v149 h2{margin:-130px auto 40px}
+ #home .how-lab-v149 .how-panorama{aspect-ratio:2172/410}
+ #home .how-lab-v149 .how-labels{padding:0 8px;gap:4px}
+ #home .how-lab-v149 .how-badge{width:27px;height:27px;font-size:15px}
+ #home .how-lab-v149 .how-label strong{font-size:clamp(9px,2vw,14px)}
+}
+
+/* V1.4.10: Featured Cuisines — seamless panoramic dome showcase. */
+#home .home-cuisines {
+  position:relative; isolation:isolate; overflow:hidden;
+  background:linear-gradient(180deg,#051b2d 0%,#061e32 16%,#061e32 84%,#051829 100%);
+  padding-top:clamp(50px,6vw,110px);
+  padding-bottom:clamp(30px,4vw,80px);
+}
+#home .home-cuisines img {
+  display:block; width:100%; max-width:none; height:auto;
+  object-fit:contain; object-position:center;
+  margin:0 auto; border:0; border-radius:0;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 11%,#000 86%,transparent 100%);
+  mask-image:linear-gradient(to bottom,transparent 0%,#000 11%,#000 86%,transparent 100%);
+}
+#home .home-cuisines h2 {z-index:2;}
