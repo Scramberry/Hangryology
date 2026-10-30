@@ -29,23 +29,52 @@
 #chemistry-results-screen .card,#all .result-card,#all .restaurant-card {
   backdrop-filter:blur(8px);
 }
-/* Casino pages: begin the casino artwork at the very top of the page,
-   not centered or stretched to cover the entire tall results page. */
+/* v1.4.45: Casino hero over approved neon wallpaper, with a seamless fade.
+   Wheel and winner only; Hangry Meter and its results remain untouched. */
+#wheel-screen.screen.active,#winner.screen.active {
+  position:relative!important;
+  isolation:isolate!important;
+  background:transparent!important;
+}
+/* Full-page neon wallpaper behind all controls and below the hero. */
 #wheel-screen.screen.active::before,#winner.screen.active::before {
-  background-color:#061528!important;
-  background-image:linear-gradient(180deg,rgba(2,11,29,.06) 0%,rgba(2,11,29,.13) 32%,rgba(2,11,29,.58) 75%,#041327 100%),url("hangry-casino-wheel-v1442.webp")!important;
+  content:""!important;
+  position:absolute!important;
+  pointer-events:none!important;
+  top:0!important;bottom:0!important;left:50%!important;
+  width:100vw!important;
+  transform:translateX(-50%)!important;
+  z-index:-2!important;
+  background-color:#041327!important;
+  background-image:linear-gradient(180deg,rgba(2,11,28,.16),rgba(2,11,28,.30)),url("hangry-neon-wallpaper-v1444.webp")!important;
   background-size:100% 100%,100% auto!important;
   background-position:center top,center top!important;
-  background-repeat:no-repeat,no-repeat!important;
+  background-repeat:no-repeat,repeat-y!important;
 }
-/* The casino is a hero at the top, while the rest of the page stays navy.
-   The wheel itself is still drawn by the site's existing code. */
-#wheel-screen.screen.active,#winner.screen.active {
-  background:transparent!important;
+/* Casino artwork occupies only the hero area. Alpha mask gently reveals neon below. */
+#wheel-screen.screen.active::after,#winner.screen.active::after {
+  content:""!important;
+  position:absolute!important;
+  pointer-events:none!important;
+  top:0!important;bottom:auto!important;left:50%!important;right:auto!important;
+  width:100vw!important;
+  height:clamp(650px,61vw,1050px)!important;
+  transform:translateX(-50%)!important;
+  z-index:-1!important;
+  background-image:linear-gradient(180deg,rgba(2,11,29,.06),rgba(2,11,29,.03)),url("hangry-casino-wheel-v1442.webp")!important;
+  background-position:center top,center top!important;
+  background-size:100% 100%,100% auto!important;
+  background-repeat:no-repeat,no-repeat!important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 58%,rgba(0,0,0,.92) 68%,rgba(0,0,0,.45) 84%,transparent 100%)!important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 58%,rgba(0,0,0,.92) 68%,rgba(0,0,0,.45) 84%,transparent 100%)!important;
 }
 @media(max-width:700px) {
   #wheel-screen.screen.active::before,#winner.screen.active::before {
-    background-size:100% 100%,auto 620px!important;
+    background-size:100% 100%,auto 1100px!important;
+  }
+  #wheel-screen.screen.active::after,#winner.screen.active::after {
+    height:730px!important;
+    background-size:100% 100%,auto 730px!important;
     background-position:center top,35% top!important;
   }
   #setup.screen.active::before,#quiz.screen.active::before,
