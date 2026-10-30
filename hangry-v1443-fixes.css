@@ -1,0 +1,34 @@
+/* Hangryology v1.4.43 — full-bleed casino, clear controls and coherent results */
+#wheel-screen.screen.active,#winner.screen.active{position:relative!important;isolation:isolate!important;background:transparent!important;overflow:visible!important}
+#wheel-screen::before,#winner::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);z-index:-2;pointer-events:none;background-color:#061528;background-image:linear-gradient(180deg,rgba(2,11,29,.08) 0%,rgba(2,11,29,.16) 35%,rgba(2,11,29,.65) 73%,#041327 100%),url("hangry-casino-wheel-v1442.webp");background-repeat:no-repeat;background-size:cover;background-position:center top}
+#wheel-screen::after,#winner::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 34% 38% at 50% 23%,rgba(2,11,28,.48),transparent 100%)}
+#wheel-screen .lab-wheel-heading{padding-top:clamp(36px,6vw,90px)!important;text-shadow:0 3px 15px #001021}
+#wheel-screen .lab-wheel-intro{text-shadow:0 3px 12px #001021}
+#wheel-screen .lab-wheel-stage{z-index:2;margin-bottom:-30px!important}
+#wheel-screen .lab-wheel-tools,#wheel-screen .lab-contenders-panel{position:relative;z-index:3}
+#wheel-screen .lab-wheel-tools{padding-top:38px}
+#winner.lab-winner-screen{padding:clamp(40px,5vw,90px) 20px 70px!important}
+#winner .hunger-themed-banner{display:none!important}
+#winner>.eyebrow{color:#ffc574!important;font-weight:900;letter-spacing:.18em;text-shadow:0 0 20px #ff962c}
+#winner .winner-title{font-size:clamp(40px,6vw,85px)!important;text-shadow:0 0 20px rgba(255,146,39,.5),0 3px 8px #001026}
+#winner .lab-winner-card{max-width:940px!important;margin:22px auto!important;background:linear-gradient(145deg,rgba(8,33,62,.94),rgba(5,18,36,.95))!important;border:2px solid #ffb65b!important;border-radius:28px!important;box-shadow:0 0 40px #ff98343d,0 25px 55px #010817!important;backdrop-filter:blur(12px)}
+#winner .lab-winner-card::before{content:'✦  JACKPOT!  ✦';display:block;width:max-content;max-width:100%;margin:0 auto 15px;padding:10px 25px;border:1px solid #ffc06b;border-radius:999px;background:#5d3417b8;color:#ffdc97;font-weight:900;letter-spacing:.15em;box-shadow:0 0 22px #ff9e344a}
+#winner #winner-name{color:white!important;text-shadow:0 0 22px #18caff75}
+/* The food artwork replaces emoji, not sits alongside it. */
+#setup button.food>span,#chemistry-player1 button.food>span,#chemistry-player2 button.food>span{display:none!important}
+#setup button.food .cuisine-symbol,#chemistry-player1 button.food .cuisine-symbol,#chemistry-player2 button.food .cuisine-symbol{display:block!important}
+/* Hide the native horizontal scrollbar while retaining swipe and arrow navigation. */
+#all .lab-cuisine-filters{scrollbar-width:none!important;-ms-overflow-style:none!important;overflow-x:auto!important}
+#all .lab-cuisine-filters::-webkit-scrollbar{display:none!important}
+/* Keep sorting menu visible and usable, not clipped by ancestors. */
+#all .lab-results-controls,#all .lab-action-row,#all .lab-sort-label{overflow:visible!important}
+#all .lab-action-row{position:relative!important;z-index:30!important}
+#all .lab-sort-label{position:relative!important;z-index:40!important}
+#all .lab-sort-menu{position:absolute!important;z-index:9999!important;max-height:250px!important;overflow-y:auto!important}
+#all .lab-sort-menu[hidden]{display:none!important}
+#all .lab-sort-trigger{cursor:pointer!important}
+/* Make reset actions look and act like buttons rather than text links. */
+.hangry-reset-everywhere{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;cursor:pointer!important;border:1px solid #26d7ff!important;border-radius:13px!important;background:rgba(4,27,52,.88)!important;color:#d8f8ff!important;padding:12px 20px!important;font-weight:800!important;box-shadow:0 0 15px #00cfff32!important;text-decoration:none!important}
+.hangry-reset-everywhere:hover{background:#103b61!important;box-shadow:0 0 22px #00cfff66!important}
+#all #back-from-all{cursor:pointer!important;border:1px solid #00d8ff!important;border-radius:13px!important;padding:12px 20px!important;background:#061c37!important;color:#eafaff!important}
+@media(max-width:700px){#wheel-screen::before,#winner::before{background-size:auto,auto 660px;background-position:center top,32% top}#wheel-screen .lab-wheel-stage{margin-bottom:0!important}#wheel-screen .lab-wheel-tools{padding-top:10px}#winner.lab-winner-screen{padding-left:12px!important;padding-right:12px!important}}

@@ -4,7 +4,7 @@ const chainFries=['mcdonald','burger king','wendy','five guys','chick-fil-a','ch
 let mode='spin',excluded=new Set(),excluded2=new Set(),soloExcluded=new Set(),restaurants=[],rotation=0,spinning=false,winner=null,geo=null;
 const favorites=()=>JSON.parse(localStorage.getItem('dinnerRouletteFavorites')||'[]');
 const saveFavorites=a=>localStorage.setItem('dinnerRouletteFavorites',JSON.stringify(a));
-const show=id=>{ if(id==='home')return resetToHome(); $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));window.scrollTo({top:0,behavior:'instant'});if(id==='saved')renderSaved();};
+const show=id=>{ if(id==='home')return resetToHome(); if(id==='all'){const f=document.querySelectorAll('#all .lab-cuisine');f.forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));const sort=document.getElementById('lab-results-sort');if(sort){sort.value='match';sort.dispatchEvent(new Event('change',{bubbles:true}));}document.querySelector('#all .lab-cuisine[data-filter="all"]')?.click();} $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));window.scrollTo({top:0,behavior:'instant'});if(id==='saved')renderSaved();};
 // Each experiment begins with clean choices. Restaurant search cache is shared,
 // but wheel exclusions and each person's preferences are never carried across modes.
 function clearChips(id){$$('#'+id+' .chip').forEach((b,i)=>b.classList.toggle('selected',i===0))}
@@ -15,6 +15,7 @@ function resetExperiment(){
  ['service','solo-fries','solo-vibe','fries','vibe','fries2','vibe2'].forEach(clearChips);
  restaurants=[];wheelItems=[];wheelTargetSize=8;rejected.clear();locked.clear();rejectionHistory=[];
  winner=null;rotation=0;spinning=false;
+ document.querySelector('#all .lab-cuisine[data-filter="all"]')?.click();
  $('#spin').disabled=false;
  $('#all-list').innerHTML='';$('#contenders').innerHTML='';
  $('#chemistry-results').classList.add('hidden');
@@ -144,7 +145,7 @@ function showChemistryResults(){
 }
 $('#chemistry-see-all').addEventListener('click',()=>show('all'));
 $('#chemistry-spin').addEventListener('click',()=>show('wheel-screen'));
-$('#back-from-all').addEventListener('click',()=>show(mode==='date'?'chemistry-results-screen':'wheel-screen'));
+$('#back-from-all').addEventListener('click',()=>{if(window.hangryExperimentActive){resetToHome();document.querySelector('#home .home-meter')?.scrollIntoView({behavior:'instant',block:'start'});}else if(mode==='date')show('chemistry-results-screen');else if(mode==='spin')show('wheel-screen');else show('setup')});
 // Version 1.2.5: independent, uncapped requests; no timer aborts.
 let activeSearchControllers=[];
 function stopActiveRequests(){activeSearchControllers.forEach(c=>c.abort());activeSearchControllers=[];}
