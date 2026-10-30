@@ -247,7 +247,41 @@ function prepareWheel(){wheelTargetSize=8;shuffleWheel();renderPlaces('#all-list
 function renderContenders(){const el=$('#contenders');el.innerHTML=wheelItems.map(r=>`<div class="contender-row"><div><strong>${escapeHtml(r.name)}</strong><small>📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</small></div><div class="contender-actions"><button class="result-btn lock-choice" data-id="${escapeHtml(r.id)}" aria-label="${locked.has(r.id)?'Unlock':'Lock'} ${escapeHtml(r.name)}">${locked.has(r.id)?'🔒 Locked':'🔓 Lock'}</button><button class="result-btn remove-choice" data-id="${escapeHtml(r.id)}" aria-label="Remove ${escapeHtml(r.name)}">✕ Remove</button></div></div>`).join('')||'<p class="muted">No contenders left. Reset rejected restaurants to try again.</p>';
 el.querySelectorAll('.lock-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.has(id)?locked.delete(id):locked.add(id);renderContenders();updateWheelStatus()}));
 el.querySelectorAll('.remove-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);wheelTargetSize=wheelItems.length;rotation=0;drawWheel();renderContenders();updateWheelStatus()}));}
-function drawWheel(){const c=$('#wheel'),ctx=c.getContext('2d'),n=wheelItems.length;if(!n)return;const cx=320,cy=320,r=290;ctx.clearRect(0,0,640,640);ctx.save();ctx.translate(cx,cy);ctx.rotate(rotation);for(let i=0;i<n;i++){const a=-Math.PI/2+i*2*Math.PI/n,b=a+2*Math.PI/n;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,a,b);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();ctx.strokeStyle='#ffd37c';ctx.lineWidth=3;ctx.stroke();ctx.save();ctx.rotate(a+Math.PI/n);ctx.translate(r*.65,0);ctx.rotate(Math.PI/2);ctx.fillStyle='#fff';ctx.font='bold 22px system-ui';ctx.textAlign='center';ctx.shadowColor='#000';ctx.shadowBlur=4;let name=wheelItems[i].name;while(ctx.measureText(name).width>160&&name.length>5)name=name.slice(0,-2)+'…';ctx.fillText(name,0,7);ctx.restore()}ctx.beginPath();ctx.arc(0,0,r+7,0,Math.PI*2);ctx.strokeStyle='#ffbe57';ctx.lineWidth=15;ctx.shadowColor='#ff9c31';ctx.shadowBlur=24;ctx.stroke();ctx.restore()}
+// v1.4.40: neon laboratory wheel; wheel selection and physics stay unchanged.
+const labWheelIcons={american:'burger',burger:'burger',fast_food:'burger',pizza:'pizza',italian:'pizza',mexican:'mexican',asian:'asian',chinese:'asian',thai:'asian',japanese:'sushi',sushi:'sushi',seafood:'seafood',steak:'steak',steakhouse:'steak',chicken:'chicken',sandwich:'sandwich',breakfast:'breakfast',coffee:'coffee',cafe:'coffee',bakery:'dessert',dessert:'dessert',ice_cream:'dessert',healthy:'healthy',salad:'healthy',indian:'indian',other:'other'};
+const labIconCache={};
+function labWheelIcon(type){
+ const k=labWheelIcons[String(type||'').toLowerCase()]||'other';
+ if(!labIconCache[k]){const img=new Image();labIconCache[k]=img;img.onload=()=>{if(!spinning)drawWheel()};img.src=`cuisine-${k}-v1439.svg`}
+ return labIconCache[k];
+}
+function drawWheel(){
+ const c=$('#wheel'),ctx=c.getContext('2d'),n=wheelItems.length;
+ ctx.clearRect(0,0,640,640);if(!n)return;
+ const cx=320,cy=320,r=289,step=2*Math.PI/n;
+ const palette=['#07375b','#8c3b22','#113d62','#9c4c1c','#103a56','#853e32','#114d65','#86421d'];
+ const accent=(document.body.dataset.hungerLevel||'3');
+ const ring=['#4cf49a','#f9d45c','#ffa34b','#ff7445','#ff3c59'][Math.max(0,Math.min(4,Number(accent)-1))];
+ ctx.save();ctx.translate(cx,cy);ctx.rotate(rotation);
+ for(let i=0;i<n;i++){
+  const a=-Math.PI/2+i*step,b=a+step,mid=a+step/2;
+  ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,a,b);ctx.closePath();
+  const g=ctx.createRadialGradient(0,0,65,0,0,r);
+  g.addColorStop(0,'#07172b');g.addColorStop(.52,palette[i%palette.length]);g.addColorStop(1,i%2?'#b65a29':'#156c99');
+  ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=i%2?'#ffae4e':'#49d9ff';ctx.lineWidth=3;ctx.stroke();
+  ctx.save();ctx.rotate(mid);ctx.translate(r*.64,0);ctx.rotate(Math.PI/2);
+  const icon=labWheelIcon(wheelItems[i].type);
+  if(icon.complete&&icon.naturalWidth){ctx.shadowColor='#13d5ff';ctx.shadowBlur=12;ctx.drawImage(icon,-24,-62,48,48);ctx.shadowBlur=0}
+  ctx.font='700 18px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.shadowColor='#000';ctx.shadowBlur=7;
+  let name=wheelItems[i].name;
+  while(ctx.measureText(name).width>145&&name.length>5)name=name.slice(0,-2)+'…';
+  ctx.fillText(name,0,12);ctx.restore();
+ }
+ ctx.beginPath();ctx.arc(0,0,r+3,0,2*Math.PI);ctx.strokeStyle='#05263d';ctx.lineWidth=18;ctx.shadowBlur=0;ctx.stroke();
+ ctx.beginPath();ctx.arc(0,0,r+4,0,2*Math.PI);ctx.strokeStyle=ring;ctx.lineWidth=8;ctx.shadowColor=ring;ctx.shadowBlur=25;ctx.stroke();
+ ctx.beginPath();ctx.arc(0,0,r-15,0,2*Math.PI);ctx.strokeStyle='rgba(76,216,255,.55)';ctx.lineWidth=3;ctx.shadowBlur=5;ctx.stroke();
+ ctx.restore();
+}
 $('#spin').addEventListener('click',()=>{if(spinning||!wheelItems.length)return;spinning=true;$('#spin').disabled=true;const start=rotation,delta=(Math.PI*2)*(5+Math.random()*3),duration=4700,t0=performance.now();function frame(now){const t=Math.min(1,(now-t0)/duration),ease=1-Math.pow(1-t,4);rotation=start+delta*ease;drawWheel();if(t<1)requestAnimationFrame(frame);else{spinning=false;$('#spin').disabled=false;const n=wheelItems.length,step=2*Math.PI/n,angle=(((-rotation)% (2*Math.PI))+(2*Math.PI))%(2*Math.PI);winner=wheelItems[Math.floor(angle/step)%n];renderWinner();show('winner')}}requestAnimationFrame(frame)});
 function safeWebsite(r){const raw=r.tags.website||r.tags['contact:website']||r.tags['website:menu']||'';try{const u=new URL(raw);return ['https:','http:'].includes(u.protocol)?u.href:null}catch{return null}}
 function mapUrl(r){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+r.lat+','+r.lon)}`}
@@ -266,7 +300,7 @@ const query=encodeURIComponent(r.name+' '+r.lat+','+r.lon);
 const menu=r.tags.website||r.tags['contact:website']||'';
 const safeMenu=/^https?:\/\//i.test(menu)?menu:'';
 const emoji=({burger:'🍔',pizza:'🍕',mexican:'🌮',chicken:'🍗',italian:'🍝',chinese:'🥡',sushi:'🍣',steak:'🥩',sandwich:'🥪',salad:'🥗',indian:'🍛',thai:'🍜',breakfast:'🍳',fast_food:'🍟',seafood:'🦐',other:'🍽️'})[r.type]||'🍽️';
-return `<article class="result-card"><div class="result-art" aria-hidden="true">${emoji}</div><div class="result-body"><strong>${escapeHtml(r.name)}</strong><span class="result-meta">📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</span><span class="result-address">${escapeHtml(r.address)}</span><div class="result-actions"><a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query=${query}">📍 Directions</a>${safeMenu?`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="${escapeHtml(safeMenu)}">📖 Website / Menu</a>`:`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q=${encodeURIComponent(r.name+' menu near '+r.address)}">📖 Find Menu</a>`}<button class="result-btn add-wheel" data-wheel="${escapeHtml(r.id)}">🎡 Add to wheel</button></div></div></article>`}).join('')||'<p class="muted">No matches found.</p>';
+return `<article class="result-card"><div class="result-art" aria-hidden="true"><img class="result-cuisine-icon" src="cuisine-${({burger:"burger",pizza:"pizza",mexican:"mexican",chicken:"chicken",italian:"pizza",chinese:"asian",sushi:"sushi",steak:"steak",sandwich:"sandwich",salad:"healthy",indian:"indian",thai:"asian",breakfast:"breakfast",fast_food:"burger",seafood:"seafood",cafe:"coffee",coffee:"coffee",bakery:"dessert",dessert:"dessert",ice_cream:"dessert",american:"burger",other:"other"})[r.type]||"other"}-v1439.svg" alt="" loading="lazy"></div><div class="result-body"><strong>${escapeHtml(r.name)}</strong><span class="result-meta">📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</span><span class="result-address">${escapeHtml(r.address)}</span><div class="result-actions"><a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query=${query}">📍 Directions</a>${safeMenu?`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="${escapeHtml(safeMenu)}">📖 Website / Menu</a>`:`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q=${encodeURIComponent(r.name+' menu near '+r.address)}">📖 Find Menu</a>`}<button class="result-btn add-wheel" data-wheel="${escapeHtml(r.id)}">🎡 Add to wheel</button></div></div></article>`}).join('')||'<p class="muted">No matches found.</p>';
 $$(`${target} .add-wheel`).forEach(b=>b.addEventListener('click',()=>{const r=restaurants.find(x=>x.id===b.dataset.wheel);if(!r)return;if(rejected.has(r.id)){rejected.delete(r.id);rejectionHistory=rejectionHistory.filter(x=>x!==r.id)}if(!wheelItems.some(x=>x.id===r.id)){if(wheelItems.length>=8){const i=wheelItems.findIndex(x=>!locked.has(x.id));if(i<0){alert("All eight contenders are locked. Unlock one to add another.");return}wheelItems.splice(i,1)}wheelItems.push(r);wheelTargetSize=wheelItems.length}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen')}));}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function renderSaved(){const a=favorites();$('#saved-list').innerHTML=a.map(r=>`<div class="place"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.address)}</small></div><button class="remove" data-id="${escapeHtml(r.id)}" title="Remove favorite">♥</button></div>`).join('')||'<div class="card"><p class="muted">No favorites yet. Spin the wheel and save a winner!</p></div>';$$('.remove').forEach(b=>b.addEventListener('click',()=>{saveFavorites(favorites().filter(x=>x.id!==b.dataset.id));renderSaved()}))}

@@ -1,0 +1,39 @@
+/* Hangryology v1.4.40 — science-lab wheel and winner, desktop and mobile */
+#wheel-screen.screen.active,#winner.screen.active{color:#f3f9ff}
+#wheel-screen .lab-wheel-heading{text-align:center;margin:18px auto 8px;max-width:1100px}
+#wheel-screen .lab-wheel-heading .eyebrow{color:#ffb75e;letter-spacing:.19em;font-weight:900}
+#wheel-screen #match-title{font-size:clamp(30px,4vw,58px);margin:10px 0;line-height:1.12;text-shadow:0 0 22px #1abdfc40}
+#wheel-screen #match-note{font-size:clamp(13px,1.3vw,17px);color:#b7dcf2}
+#wheel-screen .lab-wheel-intro{text-align:center;margin:14px auto 16px;color:#8beaff;font-size:clamp(11px,1.2vw,15px);font-weight:800;letter-spacing:.1em}
+#wheel-screen .lab-wheel-stage{position:relative;width:min(660px,calc(100vw - 32px));height:auto;aspect-ratio:1;margin:0 auto 26px;filter:drop-shadow(0 0 25px #08bcff50)}
+#wheel-screen .lab-wheel-stage canvas{display:block;width:100%!important;height:100%!important;max-width:none!important;aspect-ratio:1;object-fit:contain}
+#wheel-screen .lab-wheel-stage .pointer{position:absolute!important;top:-14px!important;left:50%!important;transform:translateX(-50%)!important;z-index:5!important;color:#ffad3b!important;text-shadow:0 0 12px #ff9c31,0 0 26px #ff9c31;font-size:36px!important}
+#wheel-screen .lab-wheel-stage .spin-center{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:clamp(94px,14vw,144px)!important;height:clamp(94px,14vw,144px)!important;border-radius:50%!important;background:radial-gradient(circle at 40% 30%,#144e73,#06172e 75%)!important;border:4px solid #ffab35!important;box-shadow:0 0 0 7px #0b253c,0 0 20px 9px #ff9e3577,inset 0 0 20px #15caff55!important;color:#fff!important;font-weight:1000!important;font-size:clamp(22px,3vw,34px)!important;letter-spacing:.05em;z-index:4!important;cursor:pointer}
+#wheel-screen .lab-wheel-stage .spin-center small{display:block;font-size:10px;letter-spacing:.05em;color:#ffdb94}
+#wheel-screen .lab-wheel-stage .spin-center:disabled{opacity:.7;cursor:wait}
+#wheel-screen .wheel-tools{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:12px auto 14px;max-width:1150px}
+#wheel-screen .wheel-tools button{border:1px solid #15caff!important;background:linear-gradient(120deg,#06182e,#0a2b46)!important;color:#e6faff!important;border-radius:13px!important;min-height:45px!important;padding:9px 15px!important;box-shadow:0 0 11px #10c5ff38!important}
+#wheel-screen .wheel-tools button:hover{border-color:#ffa63e!important;box-shadow:0 0 15px #ffa63e77!important}
+#wheel-screen #wheel-status{text-align:center;color:#aee7ff;margin:14px auto;max-width:950px}
+#wheel-screen .lab-contenders-panel{max-width:1150px!important;margin:20px auto!important;background:linear-gradient(125deg,#06172de8,#082c46ed)!important;border:1px solid #16c8ff!important;border-radius:22px!important;box-shadow:0 0 23px #10c8ff2c!important;padding:20px!important}
+#wheel-screen .lab-contenders-panel h3{text-align:center;font-size:clamp(21px,2.4vw,30px);color:#f4fbff;margin:0 0 16px}
+#wheel-screen .lab-contenders-panel .contender-row{border:1px solid #1b85b877!important;background:#06172bc9!important;border-radius:13px!important;margin:8px 0!important;padding:11px!important;display:flex!important;justify-content:space-between!important;align-items:center!important;gap:12px!important}
+#wheel-screen .lab-contenders-panel .contender-row strong{font-size:clamp(14px,1.5vw,19px)}
+#wheel-screen .lab-contenders-panel .contender-row small{color:#9bd3f1}
+#wheel-screen .lab-contenders-panel .contender-actions{display:flex;gap:7px;flex-wrap:wrap}
+#wheel-screen .lab-contenders-panel .contender-actions button{border-radius:10px!important;border:1px solid #17bdf0!important;min-height:36px!important}
+#winner .lab-winner-card{max-width:900px;margin:22px auto!important;border:2px solid #ffa43c!important;border-radius:25px!important;background:linear-gradient(130deg,#06192ff0,#102f4aef)!important;box-shadow:0 0 40px #ffa43c3b,0 0 26px #16caff35!important;padding:clamp(20px,4vw,45px)!important}
+#winner .winner-title{text-align:center;font-size:clamp(30px,4vw,56px);text-shadow:0 0 19px #ff9b4366}
+#winner .lab-winner-card #winner-name{color:#ffc267;font-size:clamp(28px,4vw,46px);text-shadow:0 0 18px #ffab4166}
+#winner .lab-winner-card .trophy{filter:drop-shadow(0 0 15px #ffb43d)}
+#winner #reject-winner,#winner #again,#winner #other{display:block;max-width:640px;width:calc(100% - 20px);margin:12px auto!important;min-height:51px;border-radius:13px!important}
+#winner #reject-winner{box-shadow:0 0 17px #ffab4270!important}
+@media(max-width:700px){
+ #wheel-screen .lab-wheel-stage{width:min(96vw,560px)!important}
+ #wheel-screen .lab-wheel-stage .spin-center{width:88px!important;height:88px!important;font-size:23px!important}
+ #wheel-screen .lab-wheel-stage .spin-center small{font-size:8px}
+ #wheel-screen .lab-contenders-panel{padding:12px!important}
+ #wheel-screen .lab-contenders-panel .contender-row{flex-wrap:wrap!important}
+ #wheel-screen .lab-contenders-panel .contender-actions{width:100%;justify-content:flex-end}
+ #wheel-screen .wheel-tools button{flex:1 1 135px;font-size:12px!important}
+}
