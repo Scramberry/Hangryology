@@ -1,0 +1,29 @@
+/* v1.4.28: one responsive art scene + a REAL CSS progress bar. */
+#loading.screen{position:relative!important;isolation:isolate;min-height:100svh!important;display:flex!important;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 18px 26px!important;background:#041127!important;overflow:hidden!important}
+#loading.screen:not(.active){display:none!important}
+#loading .hangry-loading-art{position:absolute;inset:0;z-index:-1;background-image:url("hangry-loading-lab-v1428.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
+#loading .hangry-loading-art::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,transparent 0%,transparent 58%,rgba(1,11,27,.2) 70%,rgba(1,11,27,.91) 89%,#010b1b 100%)}
+#loading .hangry-loading-ui{position:relative;z-index:2;width:min(850px,95vw);margin:0 auto 4px;padding:18px clamp(15px,3vw,32px) 16px;border-radius:20px;background:linear-gradient(180deg,rgba(1,14,35,.89),rgba(1,12,31,.96));border:1px solid rgba(50,189,255,.56);box-shadow:0 0 35px rgba(0,171,255,.16);backdrop-filter:blur(9px);text-align:center}
+#loading .hangry-loading-live{font-weight:900;letter-spacing:.1em;color:#a7e9ff;font-size:clamp(11px,1.2vw,14px);margin-bottom:12px}
+#loading .hangry-loading-track{position:relative;width:100%;height:21px;border:2px solid rgba(115,183,255,.8);border-radius:999px;overflow:hidden;background:rgba(0,9,30,.93);box-shadow:inset 0 0 13px rgba(10,39,90,.85),0 0 13px rgba(15,165,255,.22)}
+#loading .hangry-loading-fill{position:absolute;left:0;top:0;bottom:0;width:5%;border-radius:inherit;background:linear-gradient(90deg,#ff9e23,#ffcc4d,#ff782c);box-shadow:0 0 18px rgba(255,141,34,.85);transition:width .75s ease}
+#loading .hangry-loading-track.is-waiting .hangry-loading-fill{background:linear-gradient(90deg,#ff8c25,#ffd459,#ff8c25);background-size:200% 100%;animation:hangry-waiting 1.6s linear infinite}
+@keyframes hangry-waiting{to{background-position:-200% 0}}
+#loading .hangry-loading-sheen{position:absolute;inset:0;background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.14) 48%,transparent 55%);pointer-events:none}
+#loading #loading-text{color:#e5f6ff;font-size:clamp(12px,1.4vw,15px);margin:13px auto 5px;line-height:1.4}
+#loading .hangry-loading-detail{color:#91b9d5;font-size:11px;margin:4px 0 12px}
+#loading #cancel-search{position:relative;z-index:3;cursor:pointer}
+/* Avoid the five-level background spilling onto wheel/results and avoid banners on top of the loading illustration. */
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::before,
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::after{content:none!important;background:none!important}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error){background:#041326!important;min-height:0!important}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) .hunger-themed-banner{max-width:850px;margin:15px auto 30px;padding:16px 20px;background:rgba(3,17,35,.85);border-color:var(--hunger-accent);box-shadow:0 0 15px var(--hunger-glow)}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) .hunger-title{font-size:clamp(22px,3vw,34px)}
+@media(max-width:700px){
+ #loading.screen{min-height:100svh!important;padding:0 10px 12px!important;justify-content:flex-end}
+ #loading .hangry-loading-art{background-size:auto 100%;background-position:50% center}
+ #loading .hangry-loading-art::after{background:linear-gradient(to bottom,rgba(0,9,24,.12) 0%,transparent 40%,rgba(0,9,24,.45) 60%,rgba(0,9,24,.95) 81%,#010b1b 100%)}
+ #loading .hangry-loading-ui{width:100%;padding:13px 13px 10px;border-radius:14px}
+ #loading .hangry-loading-track{height:18px}
+ #loading .hangry-loading-detail{font-size:10px}
+}

@@ -63,11 +63,12 @@ let searchGeneration=0;
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function cacheRead(key){try{const obj=JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY)||'{}');return obj[key]?.elements?.length?obj[key]:null}catch{return null}}
 function cacheWrite(key,elements){try{let obj=JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY)||'{}');obj[key]={saved:Date.now(),elements};const keys=Object.keys(obj).sort((a,b)=>obj[b].saved-obj[a].saved).slice(0,8);obj=Object.fromEntries(keys.map(k=>[k,obj[k]]));localStorage.setItem(SEARCH_CACHE_KEY,JSON.stringify(obj))}catch(e){console.warn('Restaurant cache unavailable:',e)}}
-function progress(message){const el=$('#loading-text');if(el)el.textContent=message}
+function progress(message){const el=$('#loading-text');if(el)el.textContent=message;document.dispatchEvent(new CustomEvent('hangry:search-progress',{detail:{message}}))}
 function getRestaurantsFromData(data,point,miles){
  const seen=new Set();return (data.elements||[]).map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!(mode==='quiz'&&soloExcluded.has(r.type))&&!(mode==='date'&&excluded.has(r.type))&&!(mode==='date'&&excluded2.has(r.type))});
 }
 function presentResults(data,point,miles){
+ document.dispatchEvent(new CustomEvent('hangry:search-stage',{detail:{stage:'results'}}));
  restaurants=getRestaurantsFromData(data,point,miles);
  if(mode==='quiz'){
   const fries=chosen('solo-fries'),vibe=chosen('solo-vibe');
@@ -130,12 +131,13 @@ function stopActiveRequests(){activeSearchControllers.forEach(c=>c.abort());acti
 async function search(){
  const generation=++searchGeneration;
  stopActiveRequests();
- show('loading');progress('Finding real restaurants near your location…');
+ show('loading');document.dispatchEvent(new Event('hangry:search-start'));progress('Finding real restaurants near your location…');
  let point=geo;
  try{
   if($('#zip').value.trim()){
    const zip=$('#zip').value.trim();
    if(!/^\d{5}$/.test(zip))throw Error('Please enter a valid five-digit ZIP code.');
+   document.dispatchEvent(new CustomEvent('hangry:search-stage',{detail:{stage:'location'}}));
    const res=await fetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`);
    if(!res.ok)throw Error('ZIP code not found. Please check the ZIP and try again.');
    const data=await res.json();point={lat:+data.places[0].latitude,lon:+data.places[0].longitude,label:`${data.places[0]['place name']}, ${data.places[0]['state abbreviation']}`};
@@ -145,8 +147,9 @@ async function search(){
  if(generation!==searchGeneration)return;
  const miles=+$('#radius').value,meters=Math.round(miles*1609.344);
  const key=`${point.lat.toFixed(4)}:${point.lon.toFixed(4)}:${meters}`;
+ document.dispatchEvent(new CustomEvent('hangry:search-stage',{detail:{stage:'nearby'}}));
  const cached=cacheRead(key);
- if(cached){progress('Loading saved nearby restaurants…');presentResults(cached,point,miles);return}
+ if(cached){document.dispatchEvent(new CustomEvent('hangry:search-stage',{detail:{stage:'results'}}));progress('Loading saved nearby restaurants…');presentResults(cached,point,miles);return}
  // Unchanged original V1.0 Overpass query.
  const query=`[out:json][timeout:35];(nwr["amenity"~"^(restaurant|fast_food|cafe)$"](around:${meters},${point.lat},${point.lon}););out center tags;`;
  const endpoints=['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter'];
@@ -174,6 +177,7 @@ async function search(){
     if(generation!==searchGeneration||settled)return;
     settled=true;
     cacheWrite(key,data.elements);
+    document.dispatchEvent(new CustomEvent('hangry:search-stage',{detail:{stage:'results'}}));
     // Stop the other pending request only AFTER a successful result.
     controllers.forEach((c,i)=>{if(i!==index)c.abort()});
     activeSearchControllers=[];
