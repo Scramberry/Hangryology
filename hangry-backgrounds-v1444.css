@@ -1,0 +1,58 @@
+/* v1.4.44 — backgrounds only. Never modifies food artwork, mascots, or Hangry Meter overlays. */
+/* Questions and general results: full-bleed, top-aligned approved neon wallpaper. */
+#setup.screen.active, #quiz.screen.active,
+#chemistry-player1.screen.active, #chemistry-player2.screen.active,
+#chemistry-results-screen.screen.active, #all.screen.active,
+#search-error.screen.active {
+  position:relative!important;
+  isolation:isolate!important;
+  background:transparent!important;
+}
+#setup.screen.active::before, #quiz.screen.active::before,
+#chemistry-player1.screen.active::before, #chemistry-player2.screen.active::before,
+#chemistry-results-screen.screen.active::before, #all.screen.active::before,
+#search-error.screen.active::before {
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  top:0;bottom:0;left:50%;
+  width:100vw;
+  transform:translateX(-50%);
+  z-index:-1;
+  background-image:linear-gradient(180deg,rgba(2,11,28,.30),rgba(2,11,28,.55)),url("hangry-neon-wallpaper-v1444.webp");
+  background-position:center top,center top;
+  background-size:100% 100%,100% auto;
+  background-repeat:no-repeat,repeat-y;
+}
+/* Keep existing content cards readable while showing neon around them. */
+#setup .card,#quiz .card,#chemistry-player1 .card,#chemistry-player2 .card,
+#chemistry-results-screen .card,#all .result-card,#all .restaurant-card {
+  backdrop-filter:blur(8px);
+}
+/* Casino pages: begin the casino artwork at the very top of the page,
+   not centered or stretched to cover the entire tall results page. */
+#wheel-screen.screen.active::before,#winner.screen.active::before {
+  background-color:#061528!important;
+  background-image:linear-gradient(180deg,rgba(2,11,29,.06) 0%,rgba(2,11,29,.13) 32%,rgba(2,11,29,.58) 75%,#041327 100%),url("hangry-casino-wheel-v1442.webp")!important;
+  background-size:100% 100%,100% auto!important;
+  background-position:center top,center top!important;
+  background-repeat:no-repeat,no-repeat!important;
+}
+/* The casino is a hero at the top, while the rest of the page stays navy.
+   The wheel itself is still drawn by the site's existing code. */
+#wheel-screen.screen.active,#winner.screen.active {
+  background:transparent!important;
+}
+@media(max-width:700px) {
+  #wheel-screen.screen.active::before,#winner.screen.active::before {
+    background-size:100% 100%,auto 620px!important;
+    background-position:center top,35% top!important;
+  }
+  #setup.screen.active::before,#quiz.screen.active::before,
+  #chemistry-player1.screen.active::before,#chemistry-player2.screen.active::before,
+  #chemistry-results-screen.screen.active::before,#all.screen.active::before,
+  #search-error.screen.active::before {
+    background-size:100% 100%,auto 1100px;
+    background-position:center top,center top;
+  }
+}
