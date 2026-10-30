@@ -1,0 +1,42 @@
+/* V1.4.31: Alternating neon science stations; no boxed backgrounds. */
+#home .home-how .how-stacked {gap:clamp(24px,4vw,45px)!important;max-width:1020px!important;isolation:isolate}
+#home .home-how .how-stack-row,
+#home .home-how .how-stack-row:nth-child(even){position:relative;isolation:isolate;min-height:225px!important;overflow:visible!important;background:none!important}
+/* Glow and rim are separate from the circular-cropped original artwork. */
+#home .home-how .how-stack-art{
+ --station-color:#25cfff;
+ position:relative;z-index:2;flex:none;
+ width:clamp(205px,25vw,270px)!important;height:clamp(205px,25vw,270px)!important;
+ max-width:270px!important;aspect-ratio:1;
+ border:4px solid var(--station-color)!important;border-radius:50%!important;
+ background-size:400% 100%!important;background-color:#061b33;
+ box-shadow:0 0 0 5px rgba(4,22,43,.9),0 0 15px var(--station-color),0 0 38px color-mix(in srgb,var(--station-color) 48%,transparent),inset 0 0 25px rgba(2,10,25,.6);
+ -webkit-mask-image:none!important;mask-image:none!important;
+ overflow:hidden;
+}
+#home .home-how .how-stack-row:nth-child(even) .how-stack-art{--station-color:#ff922e}
+#home .home-how .how-stack-art::before{content:'';position:absolute;inset:7px;border:1px solid rgba(255,255,255,.25);border-radius:50%;pointer-events:none}
+#home .home-how .how-stack-text{position:relative;z-index:3}
+/* Circuit traces bridge the alternating stations at a diagonal. */
+#home .home-how .how-stack-row:not(:last-child)::after{
+ content:'';position:absolute;z-index:0;pointer-events:none;
+ top:calc(100% - 2px);left:25%;width:55%;height:55px;
+ background:
+  radial-gradient(circle at 0 0,#9ceeff 0 4px,transparent 5px),
+  radial-gradient(circle at 100% 100%,#ffb85c 0 4px,transparent 5px),
+  linear-gradient(155deg,transparent 0 48%,#25cfff 49%,#25cfff 50%,#ff922e 51%,transparent 52%);
+ filter:drop-shadow(0 0 5px #23c9ff) drop-shadow(0 0 7px #ff912c);opacity:.9;
+}
+#home .home-how .how-stack-row:nth-child(even)::after{transform:scaleX(-1)}
+#home .home-how .how-stack-number{box-shadow:0 0 15px rgba(255,142,44,.4)}
+@media(max-width:760px){
+ #home .home-how .how-stacked{gap:32px!important;max-width:520px!important}
+ #home .home-how .how-stack-row,#home .home-how .how-stack-row:nth-child(even){min-height:0!important;padding-bottom:0!important}
+ #home .home-how .how-stack-art{width:clamp(190px,62vw,255px)!important;height:clamp(190px,62vw,255px)!important;max-width:255px!important}
+ #home .home-how .how-stack-row:not(:last-child)::after{
+  top:calc(100% + 2px);left:calc(50% - 2px);width:4px;height:31px;
+  background:linear-gradient(to bottom,#25cfff,#ff922e);border-radius:8px;
+  box-shadow:0 0 9px #25cfff,0 0 14px #ff922e;transform:none!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){#home .home-how .how-stack-art{transition:none}}
