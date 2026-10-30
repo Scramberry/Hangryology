@@ -1,0 +1,31 @@
+/* v1.4.41: full-bleed question/spin atmosphere, centered readable forms */
+#setup.screen.active,#quiz.screen.active,
+#chemistry-player1.screen.active,#chemistry-player2.screen.active,
+#wheel-screen.screen.active {
+ position:relative;isolation:isolate;
+}
+#setup.screen.active::before,#quiz.screen.active::before,
+#chemistry-player1.screen.active::before,#chemistry-player2.screen.active::before {
+ content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+ background:linear-gradient(90deg,rgba(2,11,29,.77),rgba(3,17,39,.48),rgba(2,11,29,.77)),
+ url('hangryology-neon-wallpaper-v1433.webp') center center / cover no-repeat;
+}
+#setup.screen.active,#quiz.screen.active,#chemistry-player1.screen.active,
+#chemistry-player2.screen.active {padding-left:clamp(16px,3vw,32px);padding-right:clamp(16px,3vw,32px)}
+#setup .card,#quiz .card,#chemistry-player1 .card,#chemistry-player2 .card {
+ background:linear-gradient(130deg,rgba(5,25,47,.87),rgba(7,39,64,.85))!important;
+ backdrop-filter:blur(7px);
+}
+#setup .food .cuisine-symbol,#chemistry-player1 .food .cuisine-symbol,
+#chemistry-player2 .food .cuisine-symbol {width:62px!important;height:62px!important;object-fit:contain!important}
+#setup .food>span:first-child,#chemistry-player1 .food>span:first-child,
+#chemistry-player2 .food>span:first-child{display:none!important}
+#all .lab-cuisine-image,#all .result-cuisine-icon,#contenders .contender-cuisine-icon {
+ object-fit:contain!important;border-radius:0!important;background:transparent!important;
+}
+#all .result-art{background:transparent!important;border:none!important;box-shadow:none!important}
+#all .result-cuisine-icon{width:100%!important;height:100%!important;max-height:110px!important}
+@media(max-width:600px){
+ #setup .food .cuisine-symbol,#chemistry-player1 .food .cuisine-symbol,
+ #chemistry-player2 .food .cuisine-symbol{width:45px!important;height:45px!important}
+}

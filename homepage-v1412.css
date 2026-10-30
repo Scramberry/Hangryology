@@ -1,0 +1,58 @@
+/* Hangryology 1.4.12 — focused homepage spacing and blending refinements.
+   Loads AFTER v1.4.11. No script or functional changes. */
+
+/* Keep the complete neon tab geometry, but reduce the blank band below each tab. */
+#home .home-experiments-wrap {padding-top:44px!important;}
+#home .home-experiments {padding-top:48px!important;}
+#home .home-how.how-lab-v149 {padding-top:77px!important;padding-bottom:17px!important;}
+#home .home-cuisines {padding-top:76px!important;}
+
+/* Lower the neon tabs a little into their section instead of hanging too high. */
+#home .home-meter .meter-inner h2,
+#home .home-how.how-lab-v149>h2,
+#home .home-cuisines>h2,
+#home .home-experiments-wrap>.lab-section-tab {
+  transform:translate(-50%,-36%)!important;
+}
+
+/* Soft top/bottom atmospheric fade on the uninterrupted How It Works panorama. */
+#home .how-lab-v149 .how-panorama {
+ -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 13%,#000 82%,transparent 100%),linear-gradient(to right,transparent 0%,#000 2%,#000 98%,transparent 100%)!important;
+ mask-image:linear-gradient(to bottom,transparent 0%,#000 13%,#000 82%,transparent 100%),linear-gradient(to right,transparent 0%,#000 2%,#000 98%,transparent 100%)!important;
+ -webkit-mask-composite:source-in;
+ mask-composite:intersect;
+}
+
+/* Keep Bunsen art large, but reserve a separate lane for the slider and heads. */
+#home .home-meter .meter-sidekicks {
+ width:42%!important;
+ -webkit-mask-image:linear-gradient(to right,#000 0%,#000 49%,transparent 96%)!important;
+ mask-image:linear-gradient(to right,#000 0%,#000 49%,transparent 96%)!important;
+}
+#home .home-meter .meter-inner {margin-left:39%!important;width:59%!important;}
+#home .home-meter .meter-bar input[type="range"] {cursor:grab;}
+#home .home-meter .meter-bar input[type="range"]:active {cursor:grabbing;}
+
+/* Hub art: no inset photo panel; blend it into each station's own navy. */
+#home .home-experiments .experiment {background:linear-gradient(180deg,#06233a 0%,#061f34 63%,#051b30 100%)!important;}
+#home .home-experiments .experiment>img {
+ width:100%!important;height:clamp(250px,21vw,360px)!important;
+ object-fit:contain!important;padding:0!important;
+ -webkit-mask-image:radial-gradient(ellipse 82% 83% at 50% 48%,#000 65%,transparent 100%)!important;
+ mask-image:radial-gradient(ellipse 82% 83% at 50% 48%,#000 65%,transparent 100%)!important;
+}
+#home .home-experiments .experiment-copy {margin-top:-16px!important;}
+
+@media(max-width:900px) {
+ #home .home-meter .meter-sidekicks {width:38%!important;}
+ #home .home-meter .meter-inner {margin-left:34%!important;width:65%!important;}
+}
+@media(max-width:650px) {
+ #home .home-meter .meter-sidekicks {display:none!important;}
+ #home .home-meter .meter-inner {margin-left:0!important;width:100%!important;}
+ #home .home-experiments-wrap {padding-top:35px!important;}
+ #home .home-experiments {padding-top:44px!important;}
+ #home .home-how.how-lab-v149 {padding-top:62px!important;padding-bottom:20px!important;}
+ #home .home-cuisines {padding-top:65px!important;}
+ #home .home-experiments .experiment>img {height:clamp(170px,36vw,245px)!important;}
+}

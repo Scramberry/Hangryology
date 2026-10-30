@@ -1,0 +1,38 @@
+/* Hangryology V1.4.8: visual-only homepage polish. app.js untouched. */
+:root{--hub-cyan:#1cc8ff;--hub-orange:#ff8b3b}
+/* Header: glass lab rail with subtle active/hover illumination */
+body>.top{height:92px;max-width:none;padding-inline:clamp(18px,5vw,95px);background:linear-gradient(180deg,#0b2a44ef,#061b2de8);border-bottom:1px solid #28bafc88;box-shadow:0 8px 32px #020c1ca6,inset 0 -2px 10px #0e9cdb22;backdrop-filter:blur(12px)}
+body>.top:after{content:"";position:absolute;bottom:-2px;left:5%;right:5%;height:2px;background:linear-gradient(90deg,transparent,#27baff 30%,#ff8c38 50%,#27baff 70%,transparent);opacity:.8;pointer-events:none}
+body>.top .desktop-nav button{transition:background .2s,color .2s,box-shadow .2s;border-bottom:2px solid transparent;border-radius:8px 8px 2px 2px}
+body>.top .desktop-nav button:hover,body>.top .desktop-nav button:focus-visible{color:#fff;background:#0b3b58;border-bottom-color:#ff9142;box-shadow:0 4px 15px #ff843444}
+/* One continuous background between laboratory sections */
+#home .cinematic-home{background:linear-gradient(180deg,#04192e 0%,#062842 40%,#031b32 72%,#031323 100%)}
+#home .home-meter,#home .home-how,#home .home-cuisines{border-top:1px solid #23b9f6a0;border-bottom:0!important;background-color:transparent!important}
+/* Complete neon angled tab: outer shape is glowing, inner face is inset. No side marks. */
+#home .home-meter .meter-inner h2,#home .home-how>h2,#home .home-cuisines>h2{border:0!important;clip-path:none!important;background:transparent!important;box-shadow:none!important;isolation:isolate;filter:drop-shadow(0 0 7px #00bfff99);padding:16px clamp(30px,4vw,70px)!important}
+#home .home-meter .meter-inner h2:before,#home .home-how>h2:before,#home .home-cuisines>h2:before{content:""!important;position:absolute!important;inset:0!important;width:auto!important;height:auto!important;top:0!important;right:0!important;left:0!important;transform:none!important;filter:none!important;border:0!important;clip-path:polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%)!important;background:linear-gradient(110deg,#13aaf0,#66e5ff 28%,#168ee2 55%,#46cfff 85%,#ff913b)!important;z-index:-2!important}
+#home .home-meter .meter-inner h2:after,#home .home-how>h2:after,#home .home-cuisines>h2:after{content:""!important;position:absolute!important;inset:2px!important;width:auto!important;height:auto!important;top:2px!important;right:2px!important;left:2px!important;transform:none!important;filter:none!important;border:0!important;clip-path:polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%)!important;background:linear-gradient(180deg,#0b3857,#06172b 65%,#09223b)!important;z-index:-1!important}
+/* Large Bunsen laboratory scene integrated into meter */
+#home .home-meter{min-height:465px!important;padding:105px clamp(24px,4vw,75px) 45px 0!important;background:radial-gradient(ellipse at 60% 60%,#0e46636e,transparent 80%)!important}
+#home .meter-sidekicks{width:36%!important;max-height:none!important;height:calc(100% - 4px)!important;position:absolute!important;top:0!important;left:0!important;object-fit:cover!important;object-position:36% center!important;border-radius:0!important;mask-image:linear-gradient(to right,#000 0%,#000 47%,transparent 100%)!important;-webkit-mask-image:linear-gradient(to right,#000 0%,#000 47%,transparent 100%)!important}
+#home .meter-inner{margin-left:30%!important;width:70%!important;position:relative!important;z-index:1!important;padding:0 2.5vw!important}
+#home .meter-labels .bunsen-level{opacity:1!important;filter:brightness(1.14) saturate(1.15)!important}
+#home .meter-labels .bunsen-level.selected{transform:translateY(-7px) scale(1.1)!important;filter:brightness(1.3) saturate(1.25)!important}
+#home .meter-labels .bunsen-level.selected img{filter:drop-shadow(0 0 13px #ff943c) drop-shadow(0 0 16px #19c9ff)!important}
+/* Hub stations: generous image area, self-contained neon frame, continuous base */
+#home .home-experiments{max-width:1580px;gap:20px;padding:80px clamp(18px,3vw,55px) 85px}
+#home .experiment{--accent:#27baff;position:relative;isolation:isolate;border:1px solid color-mix(in srgb,var(--accent),#133953 45%);background:linear-gradient(180deg,#092a43,#071c31 64%,#06182a);border-radius:23px;overflow:hidden;box-shadow:inset 0 0 25px color-mix(in srgb,var(--accent),transparent 90%),0 16px 28px #0006}
+#home .experiment:nth-child(2){--accent:#ff933d}#home .experiment:nth-child(3){--accent:#ac77ff}#home .experiment:nth-child(4){--accent:#4be8a5}
+#home .experiment:before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;box-shadow:inset 0 0 22px color-mix(in srgb,var(--accent),transparent 70%)}
+#home .experiment>img{width:100%;height:clamp(210px,18vw,305px);object-fit:contain;object-position:center center;mask-image:linear-gradient(to bottom,black 0%,black 77%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,black 0%,black 77%,transparent 100%);filter:saturate(1.14) brightness(1.07)}
+#home .experiment-copy{margin-top:-10px;z-index:1;min-height:208px;justify-content:flex-start}
+#home .experiment-copy b{margin-top:auto;transition:box-shadow .2s,filter .2s}
+#home .experiment:hover{border-color:var(--accent);box-shadow:0 0 25px color-mix(in srgb,var(--accent),transparent 50%),0 18px 38px #0008}
+#home .experiment:hover .experiment-copy b{box-shadow:0 0 18px #ff8b3877;filter:brightness(1.08)}
+/* How It Works continues seamlessly */
+#home .home-how{background:radial-gradient(ellipse at center,#10436a6b,transparent 78%)!important}
+/* Panoramic food exhibit with extra upper and lower atmosphere */
+#home .home-cuisines{padding:140px 0 70px!important;margin-top:65px!important;background:linear-gradient(180deg,#041b32,#072d47 48%,#031626 100%)!important}
+#home .home-cuisines img{width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important;mask-image:linear-gradient(to bottom,transparent 0%,black 12%,black 82%,transparent 100%)!important;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 12%,black 82%,transparent 100%)!important;filter:saturate(1.15)}
+@media(max-width:900px){#home .home-meter{min-height:420px!important}#home .meter-sidekicks{width:30%!important}#home .meter-inner{margin-left:24%!important;width:76%!important}#home .home-experiments{grid-template-columns:repeat(2,minmax(0,1fr))}#home .experiment>img{height:270px}}
+@media(max-width:600px){body>.top{height:74px}#home .home-meter{padding:88px 12px 40px!important;min-height:auto!important}#home .meter-sidekicks{display:none!important}#home .meter-inner{width:100%!important;margin:0!important;padding:0!important}#home .home-experiments{gap:12px;padding:55px 12px}#home .experiment>img{height:160px}#home .experiment-copy{min-height:190px;padding-inline:9px}#home .home-cuisines{padding-top:90px!important}#home .home-cuisines img{width:140%!important;margin-left:-20%!important}}
