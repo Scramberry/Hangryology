@@ -1,0 +1,80 @@
+
+/* v1.4.39: consistent individual icon artwork; no baked-in image frames */
+body.hunger-experiment-active #all .lab-cuisine{
+ height:110px!important;justify-content:center!important;
+ background:transparent!important;border:1px solid transparent!important;
+ box-shadow:none!important;flex-basis:88px!important;min-width:88px!important;
+}
+body.hunger-experiment-active #all .lab-cuisine:hover{
+ background:rgba(3,25,48,.6)!important;border-color:#0cbbf4!important;
+}
+body.hunger-experiment-active #all .lab-cuisine.active{
+ background:rgba(7,27,51,.78)!important;
+ border-color:var(--hangry-lab-accent)!important;
+}
+body.hunger-experiment-active #all .lab-cuisine-image{
+ width:78px!important;height:77px!important;object-fit:contain!important;
+ mix-blend-mode:normal!important;border-radius:0!important;
+ filter:drop-shadow(0 0 7px rgba(15,195,255,.45));
+}
+body.hunger-experiment-active #all .lab-cuisine-label{
+ font-size:12px!important;font-weight:800!important;
+}
+/* Center all three actions in a shared row, exactly aligned and single-line on desktop */
+body.hunger-experiment-active #all .lab-action-row{
+ width:min(100%,1050px)!important;
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ align-items:stretch!important;gap:16px!important;
+ margin:8px auto 24px!important;
+}
+body.hunger-experiment-active #all .lab-action-row>*{
+ width:100%!important;min-width:0!important;max-width:none!important;
+ height:58px!important;min-height:58px!important;
+ box-sizing:border-box!important;display:flex!important;
+ align-items:center!important;justify-content:center!important;
+ flex:none!important;padding:8px 16px!important;
+ border-radius:14px!important;white-space:nowrap!important;
+ font-size:clamp(12px,1vw,15px)!important;
+ font-weight:700!important;line-height:1.2!important;
+}
+body.hunger-experiment-active #all .lab-action-row>*:first-child,
+body.hunger-experiment-active #all .lab-action-row>*:last-child{
+ border:2px solid #15cfff!important;
+ box-shadow:0 0 12px rgba(11,208,255,.43),inset 0 0 12px rgba(11,208,255,.09)!important;
+}
+body.hunger-experiment-active #all .lab-action-row>*:nth-child(2){
+ border:2px solid #ffa333!important;
+ box-shadow:0 0 12px rgba(255,158,34,.5),inset 0 0 12px rgba(255,158,34,.11)!important;
+}
+body.hunger-experiment-active #all .lab-action-row #lab-results-sort{
+ width:auto!important;max-width:none!important;min-width:0!important;
+ flex:1!important;white-space:nowrap!important;
+ font-size:inherit!important;color:white!important;
+}
+body.hunger-experiment-active #all .lab-action-row .lab-sort-label{gap:10px!important}
+body.hunger-experiment-active #all .lab-action-row .hangry-reset-everywhere{
+ white-space:nowrap!important;letter-spacing:-.015em!important;
+}
+#setup .food .cuisine-symbol{
+ display:block!important;width:54px!important;height:54px!important;
+ object-fit:contain!important;flex:0 0 54px!important;
+ filter:drop-shadow(0 0 7px rgba(16,194,255,.45));
+}
+#setup .food{display:flex!important;align-items:center!important;gap:9px!important}
+#setup .food>span:first-child{display:none!important}
+#contenders .contender-cuisine-icon{
+ width:44px;height:44px;object-fit:contain;flex:0 0 44px;
+ filter:drop-shadow(0 0 6px rgba(24,205,255,.5));
+}
+#contenders .contender-row>div:first-child{display:flex;align-items:center;gap:10px}
+#contenders .contender-info{display:flex;flex-direction:column;gap:3px}
+@media(max-width:700px){
+ body.hunger-experiment-active #all .lab-action-row{
+  grid-template-columns:1fr!important;gap:9px!important;width:min(100%,400px)!important;
+ }
+ body.hunger-experiment-active #all .lab-action-row>*{
+  height:50px!important;min-height:50px!important;font-size:13px!important;
+ }
+ body.hunger-experiment-active #all .lab-cuisine{min-width:74px!important;flex-basis:74px!important;height:94px!important}
+ body.hunger-experiment-active #all .lab-cuisine-image{width:65px!important;height:62px!important}
+}
