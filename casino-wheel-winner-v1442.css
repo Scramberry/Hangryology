@@ -1,0 +1,20 @@
+
+/* Casino background is decoration; wheel remains a real interactive canvas. */
+#wheel-screen,#winner.lab-winner-screen{position:relative;isolation:isolate;background:transparent!important;overflow:visible}
+#wheel-screen::before,#winner.lab-winner-screen::before{content:"";position:absolute;z-index:-2;inset:0 auto 0 50%;width:100vw;transform:translateX(-50%);background:linear-gradient(180deg,rgba(1,9,27,.12) 0%,rgba(1,9,27,.2) 40%,rgba(1,9,27,.7) 78%,#041327 100%),url("hangry-casino-wheel-v1442.webp") center top/100% auto no-repeat,#061326}
+#wheel-screen::after{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:radial-gradient(ellipse 35% 32% at 50% 23%,rgba(1,8,25,.45),transparent 90%)}
+#wheel-screen .lab-wheel-heading{padding-top:clamp(2rem,5vw,5rem);position:relative;z-index:1;text-shadow:0 2px 18px #001127}
+#wheel-screen .lab-wheel-intro{position:relative;z-index:1;text-shadow:0 2px 16px #001127}
+#wheel-screen .lab-wheel-stage{position:relative;z-index:2;margin-bottom:-2rem}
+#wheel-screen .wheel-tools{position:relative;z-index:3;padding-top:2.5rem}
+#wheel-screen .lab-contenders-panel{position:relative;z-index:2}
+#winner.lab-winner-screen{padding-bottom:4rem}
+#winner.lab-winner-screen::before{background:linear-gradient(180deg,rgba(1,9,27,.3),rgba(1,9,27,.62) 40%,#041327 92%),url("hangry-casino-wheel-v1442.webp") center top/100% auto no-repeat,#061326}
+#winner .hunger-themed-banner{display:none!important}
+#winner>.eyebrow{margin-top:clamp(2rem,5vw,4rem);color:#ffc266;font-weight:900;letter-spacing:.16em;text-shadow:0 0 18px #ff932b}
+#winner .winner-title{font-size:clamp(2.5rem,6vw,5.8rem);color:white;text-shadow:0 3px 6px #031225,0 0 24px #f80}
+#winner .lab-winner-card{position:relative;max-width:920px;margin:1.8rem auto;border:2px solid rgba(255,165,55,.8);border-radius:28px;background:linear-gradient(145deg,rgba(7,28,53,.96),rgba(5,18,36,.94))!important;box-shadow:0 0 0 4px rgba(0,210,255,.1),0 0 45px rgba(255,135,25,.24),0 24px 60px #020a19;backdrop-filter:blur(12px)}
+#winner .lab-winner-card::before{content:"✦  JACKPOT!  ✦";display:block;width:fit-content;margin:0 auto 1rem;padding:.55rem 1.3rem;border:1px solid #ffb44f;border-radius:999px;color:#ffd78b;background:rgba(83,40,11,.75);font-weight:900;letter-spacing:.15em;box-shadow:0 0 20px rgba(255,157,44,.35)}
+#winner #winner-name{color:white;text-shadow:0 0 18px rgba(0,212,255,.5)}
+#winner .actions .linkbtn,#winner .actions button,#winner>button{border-radius:14px}
+@media(max-width:700px){#wheel-screen::before,#winner.lab-winner-screen::before{background-size:auto,auto 570px,auto;background-position:center top,30% top,center}#wheel-screen .lab-wheel-heading{padding-top:1.3rem}#wheel-screen .lab-wheel-stage{margin-bottom:0}#wheel-screen .wheel-tools{padding-top:1rem}}
