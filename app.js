@@ -4,7 +4,7 @@ const chainFries=['mcdonald','burger king','wendy','five guys','chick-fil-a','ch
 let mode='spin',excluded=new Set(),excluded2=new Set(),soloExcluded=new Set(),restaurants=[],rotation=0,spinning=false,winner=null,geo=null;
 const favorites=()=>JSON.parse(localStorage.getItem('dinnerRouletteFavorites')||'[]');
 const saveFavorites=a=>localStorage.setItem('dinnerRouletteFavorites',JSON.stringify(a));
-const show=id=>{ $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));window.scrollTo({top:0,behavior:'instant'});if(id==='saved')renderSaved();};
+const show=id=>{ if(id==='home')return resetToHome(); $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));window.scrollTo({top:0,behavior:'instant'});if(id==='saved')renderSaved();};
 // Each experiment begins with clean choices. Restaurant search cache is shared,
 // but wheel exclusions and each person's preferences are never carried across modes.
 function clearChips(id){$$('#'+id+' .chip').forEach((b,i)=>b.classList.toggle('selected',i===0))}
@@ -26,7 +26,27 @@ function resetExperiment(){
  $('#player2').classList.add('hidden');
  $('#continue').textContent=mode==='date'?'Continue to Player 1 →':'Continue →';
 }
-function enterMode(next){mode=next;resetExperiment();show('setup')}
+function resetToHome(){
+ mode='spin';
+ window.hangryExperimentActive=false;
+ document.body.classList.remove('hunger-experiment-active');
+ delete document.body.dataset.hungerLevel;
+ resetExperiment();
+ const slider=document.getElementById('hangry-range');
+ if(slider){slider.value='3';slider.dispatchEvent(new Event('input',{bubbles:true}));}
+ try{localStorage.removeItem('hangryologyLevel');localStorage.removeItem('hangryologyExperimentZip')}catch(e){}
+ const zip=document.getElementById('zip');if(zip)zip.value='';
+ const experimentZip=document.getElementById('hunger-zip');if(experimentZip)experimentZip.value='';
+ const radius=document.getElementById('radius');if(radius)radius.value='10';
+ $$('.screen').forEach(e=>e.classList.toggle('active',e.id==='home'));
+ window.scrollTo({top:0,behavior:'instant'});
+}
+function enterMode(next){
+ window.hangryExperimentActive=false;
+ document.body.classList.remove('hunger-experiment-active');
+ delete document.body.dataset.hungerLevel;
+ mode=next;resetExperiment();show('setup')
+}
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>{
  if(b.dataset.mode){enterMode(b.dataset.mode)}
  else if(b.dataset.go==='wheel-screen'&&!wheelItems.length){enterMode('spin')}
@@ -34,8 +54,8 @@ $$('[data-go]').forEach(b=>b.addEventListener('click',()=>{
  $('#mobile-menu').classList.remove('open');
 }));
 $$('[data-mode]').forEach(b=>b.addEventListener('click',()=>enterMode(b.dataset.mode)));
-$('#reset-experiment').addEventListener('click',()=>{if(confirm('Start this experiment over? Your saved favorite restaurants and cached searches will stay.')){resetExperiment();show('setup')}});
-$('#reset-from-results').addEventListener('click',()=>{resetExperiment();show('setup')});
+$('#reset-experiment').addEventListener('click',()=>{if(confirm('Reset the experiment and return to Mission Control? Your saved favorites will stay.'))resetToHome()});
+$('#reset-from-results').addEventListener('click',resetToHome);
 $('#cuisinesSolo').innerHTML=categories.map(([emoji,label,id])=>`<button class="food" data-category-solo="${id}"><span>${emoji}</span>${label}</button>`).join('');
 $$('[data-category-solo]').forEach(b=>b.addEventListener('click',()=>{const c=b.dataset.categorySolo;soloExcluded.has(c)?soloExcluded.delete(c):soloExcluded.add(c);b.classList.toggle('excluded',soloExcluded.has(c))}));
 $('#cuisines').innerHTML=categories.map(([emoji,label,id])=>`<button class="food" data-category="${id}"><span>${emoji}</span>${label}</button>`).join('');
@@ -252,7 +272,7 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 function renderSaved(){const a=favorites();$('#saved-list').innerHTML=a.map(r=>`<div class="place"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.address)}</small></div><button class="remove" data-id="${escapeHtml(r.id)}" title="Remove favorite">♥</button></div>`).join('')||'<div class="card"><p class="muted">No favorites yet. Spin the wheel and save a winner!</p></div>';$$('.remove').forEach(b=>b.addEventListener('click',()=>{saveFavorites(favorites().filter(x=>x.id!==b.dataset.id));renderSaved()}))}
 
 const hangryMessages=[['Oh, you’re just browsing. Must be nice.','Take your time and explore.'],['A snack could fix this.','We’ll help narrow it down.'],['We’re running out of patience here.','We’ll keep your food mission focused.'],['Someone get this person a cheeseburger!','Skip the quiz and prioritize nearby quick-service options.'],['🚨 THIS IS NOT A DRILL. DEPLOY THE FRIES!','We’ll skip the quiz and prioritize nearby quick food.']];
-$('#hangry-range').addEventListener('input',e=>{const i=+e.target.value-1;$('#hangry-status').textContent=hangryMessages[i][0];if($('#hangry-tip'))$('#hangry-tip').textContent=hangryMessages[i][1];localStorage.setItem('hangryologyLevel',e.target.value)});$('#hangry-range').value=localStorage.getItem('hangryologyLevel')||'3';$('#hangry-range').dispatchEvent(new Event('input'));
+$('#hangry-range').addEventListener('input',e=>{const i=+e.target.value-1;$('#hangry-status').textContent=hangryMessages[i][0];if($('#hangry-tip'))$('#hangry-tip').textContent=hangryMessages[i][1];localStorage.setItem('hangryologyLevel',e.target.value)});$('#hangry-range').value='3';$('#hangry-range').dispatchEvent(new Event('input'));
 $('#menu-toggle').addEventListener('click',()=>$('#mobile-menu').classList.toggle('open'));
 
 $('#retry-search').addEventListener('click',search);$('#back-to-setup').addEventListener('click',()=>show('setup'));

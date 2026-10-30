@@ -1,0 +1,49 @@
+/* V1.4.34: full-bleed meter backgrounds, no blue side gutters, persistent full-page art */
+body.hunger-experiment-active{background:#030a17!important}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error){
+ position:relative!important;isolation:isolate!important;
+ box-sizing:border-box!important;
+ width:100vw!important;max-width:none!important;
+ margin-left:calc(50% - 50vw)!important;
+ margin-right:0!important;
+ min-height:100dvh!important;
+ background:transparent!important;
+ border:0!important;border-radius:0!important;
+ overflow:visible!important;
+}
+/* One fixed wallpaper layer covers the WHOLE viewport, independent of section width and height. */
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::before{
+ content:""!important;display:block!important;
+ position:fixed!important;inset:0!important;
+ z-index:-1!important;pointer-events:none!important;
+ background-image:linear-gradient(180deg,rgba(1,7,18,.42),rgba(1,7,18,.65)),var(--hunger-art)!important;
+ background-repeat:no-repeat!important;
+ background-size:cover,cover!important;
+ background-position:center,center center!important;
+ opacity:1!important;
+ -webkit-mask-image:none!important;mask-image:none!important;
+}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::after{content:none!important;display:none!important}
+/* Let the artwork show through; cards remain readable. */
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) .hunger-themed-banner{
+ background:rgba(2,12,29,.76)!important;backdrop-filter:blur(9px)!important;
+}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) .result-card{
+ background:rgba(7,28,52,.88)!important;
+}
+.hangry-reset-everywhere{
+ position:relative;z-index:12;display:block;margin:12px 0 12px auto!important;
+ padding:9px 15px!important;max-width:calc(100% - 20px);
+ background:rgba(2,17,37,.85)!important;color:#9be9ff!important;
+ border:1px solid rgba(46,196,255,.75)!important;border-radius:100px!important;
+ font-size:13px!important;font-weight:800!important;letter-spacing:.01em;
+ cursor:pointer;box-shadow:0 0 15px rgba(0,180,255,.13);
+}
+.hangry-reset-everywhere:hover{color:#fff!important;border-color:#ff993c!important}
+@media(max-width:700px){
+ body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::before{
+  background-image:linear-gradient(180deg,rgba(1,7,18,.45),rgba(1,7,18,.77)),var(--hunger-art)!important;
+  background-size:cover,cover!important;background-position:center,center top!important;
+ }
+ .hangry-reset-everywhere{font-size:12px!important;padding:9px 12px!important;margin-right:8px!important}
+}

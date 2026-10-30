@@ -1,0 +1,92 @@
+
+/* V1.4.35: actual five independently rendered full-width top banners,
+   with a soft fade into a cohesive neon lab interface.
+   Preserve actual restaurant data and functional wheel/actions. */
+body.hunger-experiment-active{
+ --hangry-lab-accent:#ff9a32;
+ --hangry-lab-secondary:#13cfff;
+ --hangry-lab-banner:url("hangry-banner-level-3-v1435.webp");
+ --hangry-lab-glow:rgba(255,145,35,.27);
+}
+body.hunger-experiment-active[data-hunger-level="1"]{--hangry-lab-accent:#41f58a;--hangry-lab-secondary:#16d7e9;--hangry-lab-banner:url("hangry-banner-level-1-v1435.webp");--hangry-lab-glow:rgba(54,239,123,.25)}
+body.hunger-experiment-active[data-hunger-level="2"]{--hangry-lab-accent:#ffdc55;--hangry-lab-secondary:#1fd9fa;--hangry-lab-banner:url("hangry-banner-level-2-v1435.webp");--hangry-lab-glow:rgba(255,211,51,.26)}
+body.hunger-experiment-active[data-hunger-level="3"]{--hangry-lab-accent:#ff983b;--hangry-lab-secondary:#16cfff;--hangry-lab-banner:url("hangry-banner-level-3-v1435.webp");--hangry-lab-glow:rgba(255,133,30,.28)}
+body.hunger-experiment-active[data-hunger-level="4"]{--hangry-lab-accent:#ff653e;--hangry-lab-secondary:#ffb442;--hangry-lab-banner:url("hangry-banner-level-4-v1435.webp");--hangry-lab-glow:rgba(255,75,42,.3)}
+body.hunger-experiment-active[data-hunger-level="5"]{--hangry-lab-accent:#ff3654;--hangry-lab-secondary:#ff9441;--hangry-lab-banner:url("hangry-banner-level-5-v1435.webp");--hangry-lab-glow:rgba(255,38,62,.33)}
+/* Page-wide top hero: anchored to the top, not a side image or tiled wallpaper. */
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error){
+ width:100vw!important;max-width:none!important;
+ margin-left:calc(50% - 50vw)!important;
+ margin-right:0!important;
+ min-height:100dvh!important;
+ background:#031022!important;
+ background-image:none!important;
+ isolation:isolate!important;position:relative!important;
+ border:0!important;border-radius:0!important;
+ overflow:clip!important;
+ padding-top:clamp(215px,24vw,430px)!important;
+}
+/* Override all earlier pseudo backgrounds; use a single full-bleed banner with fade. */
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::before{
+ content:""!important;display:block!important;
+ position:absolute!important;inset:0 0 auto!important;
+ height:clamp(430px,52vw,840px)!important;
+ z-index:-1!important;pointer-events:none!important;
+ background-image:
+ linear-gradient(to bottom,rgba(1,9,22,.04) 0%,rgba(1,9,22,.02) 35%,rgba(2,12,29,.45) 58%,#031022 96%),
+ var(--hangry-lab-banner)!important;
+ background-size:100% 100%,100% auto!important;
+ background-position:center top,center top!important;
+ background-repeat:no-repeat!important;
+ opacity:1!important;
+ -webkit-mask-image:none!important;mask-image:none!important;
+}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::after{
+ content:""!important;display:block!important;position:absolute!important;
+ inset:0!important;z-index:-2!important;pointer-events:none!important;
+ background:radial-gradient(ellipse at 50% 440px,var(--hangry-lab-glow),transparent 65%),#031022!important;
+}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) .hunger-themed-banner{
+ position:relative!important;z-index:2!important;
+ margin:0 auto clamp(20px,3vw,42px)!important;
+ width:min(1040px,calc(100% - 28px))!important;
+ max-width:1040px!important;
+ padding:16px 20px!important;
+ background:linear-gradient(90deg,rgba(3,15,32,.83),rgba(3,15,32,.6),rgba(3,15,32,.83))!important;
+ border:1px solid var(--hangry-lab-accent)!important;
+ border-radius:20px!important;
+ box-shadow:0 0 24px var(--hangry-lab-glow)!important;
+ backdrop-filter:blur(12px)!important;
+}
+body.hunger-experiment-active .hunger-badge{color:var(--hangry-lab-accent)!important}
+body.hunger-experiment-active .hunger-title{font-size:clamp(24px,3vw,43px)!important;margin:7px 0!important}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) .result-card,
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) .restaurant-card{
+ background:linear-gradient(110deg,rgba(7,27,50,.96),rgba(6,20,42,.93))!important;
+ border:1px solid var(--hangry-lab-accent)!important;
+ border-radius:19px!important;
+ box-shadow:0 0 14px rgba(0,0,0,.17),0 0 16px var(--hangry-lab-glow)!important;
+ backdrop-filter:blur(12px)!important;
+}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) :is(.chip.active,.selected,.active-filter){
+ border-color:var(--hangry-lab-accent)!important;
+}
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) :is(.hangry-reset-everywhere,.back){
+ position:relative;z-index:3;
+}
+@media(max-width:700px){
+ body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error){
+  padding-top:clamp(190px,65vw,310px)!important;
+ }
+ body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::before{
+  height:clamp(380px,115vw,640px)!important;
+  background-size:100% 100%,auto clamp(310px,80vw,470px)!important;
+  background-position:center top,center top!important;
+ }
+ body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error) .hunger-themed-banner{
+  width:calc(100% - 18px)!important;padding:12px 10px!important;margin-bottom:18px!important;
+ }
+ body.hunger-experiment-active .hunger-title{font-size:clamp(22px,6vw,30px)!important}
+}
+/* Other modes keep their existing dimmed neon wallpaper and layouts.
+   Loading retains its dedicated illustrated progress screen. */
