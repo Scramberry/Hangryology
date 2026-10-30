@@ -1,0 +1,60 @@
+
+/* Hunger Experiment v1.4.25 — scoped to new elements and themed search screens */
+#home .hunger-experiment-form{
+ position:relative;z-index:8;width:min(100%,930px);
+ margin:34px auto 55px;padding:20px 22px 18px;
+ border:1px solid rgba(58,204,255,.46);border-radius:18px;
+ background:linear-gradient(130deg,rgba(2,18,38,.89),rgba(8,35,60,.74));
+ box-shadow:0 0 32px rgba(0,181,255,.13);backdrop-filter:blur(10px);
+}
+#home .hunger-experiment-form label{display:block;color:#bfefff;font-weight:900;font-size:13px;letter-spacing:.1em;margin-bottom:12px}
+#home .hunger-form-row{display:flex;gap:12px;align-items:stretch}
+#home #hunger-zip{flex:1;min-width:0;padding:15px 16px;border-radius:11px;border:2px solid #23bdf4;background:rgba(2,15,31,.9);color:white;font-size:17px;font-weight:700}
+#home #hunger-launch{flex:1.3;min-width:0;padding:15px 16px;border-radius:11px;border:0;background:linear-gradient(110deg,#ff9e36,#ff5d27);color:#061626;font-weight:1000;font-size:15px;cursor:pointer;box-shadow:0 4px 20px rgba(255,108,34,.22)}
+#home #hunger-launch:hover{filter:brightness(1.15);transform:translateY(-1px)}
+#home #hunger-experiment-note{margin:12px 0 0;color:#cce6f6;font-size:13px;line-height:1.5}
+body.hunger-experiment-active{--hunger-accent:#ff9636;--hunger-glow:rgba(255,150,54,.45);--hunger-art:url('hunger-level-3-byte-bunsen.webp')}
+body.hunger-experiment-active[data-hunger-level="1"]{--hunger-accent:#3cf47c;--hunger-glow:rgba(36,246,104,.4);--hunger-art:url('hunger-level-1-byte-bunsen.webp')}
+body.hunger-experiment-active[data-hunger-level="2"]{--hunger-accent:#ffe34c;--hunger-glow:rgba(255,224,45,.4);--hunger-art:url('hunger-level-2-byte-bunsen.webp')}
+body.hunger-experiment-active[data-hunger-level="3"]{--hunger-accent:#ff9834;--hunger-glow:rgba(255,147,45,.4);--hunger-art:url('hunger-level-3-byte-bunsen.webp')}
+body.hunger-experiment-active[data-hunger-level="4"]{--hunger-accent:#ff643b;--hunger-glow:rgba(255,76,44,.45);--hunger-art:url('hunger-level-4-byte-bunsen.webp')}
+body.hunger-experiment-active[data-hunger-level="5"]{--hunger-accent:#ff354e;--hunger-glow:rgba(255,35,63,.5);--hunger-art:url('hunger-level-5-byte-bunsen.webp')}
+body.hunger-experiment-active .screen.active:is(#loading,#wheel-screen,#all,#winner,#search-error){
+ position:relative;isolation:isolate;min-height:100vh;
+ background:radial-gradient(ellipse at 80% 30%,var(--hunger-glow),transparent 55%),#041122!important;
+}
+body.hunger-experiment-active .screen.active:is(#loading,#wheel-screen,#all,#winner,#search-error)::before{
+ content:"";position:absolute;z-index:-1;inset:0;
+ background-image:linear-gradient(90deg,rgba(2,11,25,.93) 0%,rgba(2,11,25,.79) 35%,rgba(2,11,25,.42) 75%,rgba(2,11,25,.38) 100%),var(--hunger-art);
+ background-repeat:no-repeat;background-size:cover,auto min(100vh,1000px);
+ background-position:center,right top;
+ opacity:.85;pointer-events:none;
+ mask-image:linear-gradient(to bottom,black 0%,black 70%,transparent 100%);
+}
+body.hunger-experiment-active .screen.active:is(#loading,#wheel-screen,#all,#winner,#search-error)::after{
+ content:"";position:absolute;z-index:-2;inset:0;
+ background:radial-gradient(ellipse at 80% 30%,var(--hunger-glow),transparent 62%),linear-gradient(180deg,#06172d,#030d1c);
+ pointer-events:none;
+}
+.hunger-themed-banner{display:none}
+body.hunger-experiment-active .screen.active .hunger-themed-banner{
+ display:block;max-width:850px;margin:18px auto 36px;padding:26px 25px;
+ border:1px solid var(--hunger-accent);border-radius:20px;
+ background:linear-gradient(115deg,rgba(3,15,33,.92),rgba(4,21,42,.64));
+ box-shadow:0 0 32px var(--hunger-glow);text-align:center;
+}
+body.hunger-experiment-active .hunger-badge{color:var(--hunger-accent);font-size:13px;font-weight:900;letter-spacing:.12em}
+body.hunger-experiment-active .hunger-title{color:white;font-weight:1000;font-size:clamp(26px,4.4vw,54px);margin:10px 0;text-shadow:0 0 24px var(--hunger-glow)}
+body.hunger-experiment-active .hunger-subtitle{color:#e2f4ff;font-size:16px;margin:8px 0}
+body.hunger-experiment-active .screen.active .card,body.hunger-experiment-active .screen.active .result-card{
+ backdrop-filter:blur(12px);border-color:var(--hunger-accent);
+}
+body.hunger-experiment-active .screen.active button:not(.back){accent-color:var(--hunger-accent)}
+@media(max-width:700px){
+ #home .hunger-form-row{flex-direction:column}
+ #home .hunger-experiment-form{padding:16px;margin:20px auto 34px}
+ body.hunger-experiment-active .screen.active:is(#loading,#wheel-screen,#all,#winner,#search-error)::before{
+ background-image:linear-gradient(180deg,rgba(2,11,25,.55),rgba(2,11,25,.93) 50%),var(--hunger-art);
+ background-size:cover,100% auto;background-position:center,center top;
+ }
+}

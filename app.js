@@ -87,8 +87,26 @@ function presentResults(data,point,miles){
    });
   });
  }
- restaurants.sort((a,b)=>a.miles-b.miles);
- if(+$('#hangry-range').value>=4)restaurants=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);
+ if(window.hangryExperimentActive){
+  const level=Number($('#hangry-range').value)||3;
+  const score=r=>{
+   const type=String(r.type||'').toLowerCase(),amenity=String(r.tags?.amenity||'');
+   const light=['cafe','salad','breakfast','sandwich','other'].includes(type);
+   const snack=['sandwich','pizza','mexican','burger','cafe','fast_food'].includes(type)||amenity==='cafe';
+   const substantial=amenity==='restaurant'||['burger','mexican','italian','chinese','thai','indian','steak','sushi'].includes(type);
+   const quick=amenity==='fast_food'||['burger','pizza','sandwich','chicken','fast_food'].includes(type);
+   const match=[light,snack,substantial,quick,quick][level-1];
+   const distanceWeight=[.6,.9,1.1,2.5,4][level-1];
+   return (match?0:level>=4?6:2)+r.miles*distanceWeight;
+  };
+  restaurants.sort((a,b)=>score(a)-score(b));
+ }else{
+  restaurants.sort((a,b)=>a.miles-b.miles);
+  if(+$('#hangry-range').value>=4){
+   const fast=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);
+   if(fast.length)restaurants=fast;
+  }
+ }
  if(!restaurants.length){show('search-error');$('#error-message').textContent='The search returned restaurants, but none matched your current filters. Try fewer exclusions or a different preference.';return}
  rejected.clear();locked.clear();rejectionHistory=[];prepareWheel();if(mode==='date')showChemistryResults();else show(['browse','quiz'].includes(mode)?'all':'wheel-screen');
 }
@@ -173,6 +191,20 @@ async function search(){
  void runServer(endpoints[0],0);
  void runServer(endpoints[1],1);
 }
+window.hangryLaunchExperiment=function(zip,level){
+ const z=String(zip||'').trim();
+ if(!/^\\d{5}$/.test(z))return false;
+ $('#zip').value=z;
+ $('#hangry-range').value=String(level);
+ $('#hangry-range').dispatchEvent(new Event('input'));
+ const radius=$('#radius');
+ radius.value=level===5?'3':level===4?'5':level===3?'10':'15';
+ if(radius.value!==String(level===5?3:level===4?5:level===3?10:15))radius.value='10';
+ mode='browse';
+ window.hangryExperimentActive=true;
+ search();
+ return true;
+};
 const cancelSearch=()=>{searchGeneration++;stopActiveRequests();show('setup')};
 $('#cancel-search')?.addEventListener('click',cancelSearch);
 
@@ -210,7 +242,7 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 function renderSaved(){const a=favorites();$('#saved-list').innerHTML=a.map(r=>`<div class="place"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.address)}</small></div><button class="remove" data-id="${escapeHtml(r.id)}" title="Remove favorite">♥</button></div>`).join('')||'<div class="card"><p class="muted">No favorites yet. Spin the wheel and save a winner!</p></div>';$$('.remove').forEach(b=>b.addEventListener('click',()=>{saveFavorites(favorites().filter(x=>x.id!==b.dataset.id));renderSaved()}))}
 
 const hangryMessages=[['Oh, you’re just browsing. Must be nice.','Take your time and explore.'],['A snack could fix this.','We’ll help narrow it down.'],['We’re running out of patience here.','We’ll keep your food mission focused.'],['Someone get this person a cheeseburger!','Skip the quiz and prioritize nearby quick-service options.'],['🚨 THIS IS NOT A DRILL. DEPLOY THE FRIES!','We’ll skip the quiz and prioritize nearby quick food.']];
-$('#hangry-range').addEventListener('input',e=>{const i=+e.target.value-1;$('#hangry-status').textContent=hangryMessages[i][0];$('#hangry-tip').textContent=hangryMessages[i][1];localStorage.setItem('hangryologyLevel',e.target.value)});$('#hangry-range').value=localStorage.getItem('hangryologyLevel')||'3';$('#hangry-range').dispatchEvent(new Event('input'));
+$('#hangry-range').addEventListener('input',e=>{const i=+e.target.value-1;$('#hangry-status').textContent=hangryMessages[i][0];if($('#hangry-tip'))$('#hangry-tip').textContent=hangryMessages[i][1];localStorage.setItem('hangryologyLevel',e.target.value)});$('#hangry-range').value=localStorage.getItem('hangryologyLevel')||'3';$('#hangry-range').dispatchEvent(new Event('input'));
 $('#menu-toggle').addEventListener('click',()=>$('#mobile-menu').classList.toggle('open'));
 
 $('#retry-search').addEventListener('click',search);$('#back-to-setup').addEventListener('click',()=>show('setup'));
