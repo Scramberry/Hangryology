@@ -1,0 +1,30 @@
+/* V1.4.37 — real UI inspired by approved second screenshot, no invented ratings/reviews/photos */
+body.hunger-experiment-active #all.screen.active{padding-top:clamp(280px,30vw,505px)!important;padding-left:clamp(18px,4vw,90px)!important;padding-right:clamp(18px,4vw,90px)!important}
+body.hunger-experiment-active #all.screen.active::before{height:clamp(620px,65vw,1010px)!important;background-image:linear-gradient(to bottom,transparent 0%,rgba(3,16,34,.08) 30%,rgba(3,16,34,.60) 57%,#031022 93%),var(--hangry-lab-banner)!important}
+body.hunger-experiment-active #all .hunger-themed-banner{width:fit-content!important;max-width:calc(100% - 25px)!important;margin:0 auto 12px!important;padding:6px 22px!important;border-radius:999px!important;background:rgba(2,12,30,.83)!important}
+body.hunger-experiment-active #all .hunger-themed-banner .hunger-title,body.hunger-experiment-active #all .hunger-themed-banner .hunger-subtitle{display:none!important}
+body.hunger-experiment-active #all .hunger-badge{font-size:12px!important}
+body.hunger-experiment-active #all .lab-matches-title{text-align:center!important;font-size:clamp(29px,3.5vw,55px)!important;line-height:1.12!important;margin:6px auto 8px!important;color:white!important;text-shadow:0 4px 18px #001325!important}
+body.hunger-experiment-active #all .lab-matches-title #all-count{color:var(--hangry-lab-accent)!important;background:none!important;border:0!important;padding:0!important;font:inherit!important;box-shadow:none!important}
+body.hunger-experiment-active #all .lab-results-intro{text-align:center;color:#d1e7f7;font-size:clamp(14px,1.4vw,19px);margin:0 auto 24px}
+body.hunger-experiment-active #all .lab-results-controls{display:flex;gap:18px;justify-content:space-between;align-items:center;margin:14px 0 26px;position:relative;z-index:2}
+body.hunger-experiment-active #all .lab-cuisine-filters{display:flex;gap:9px;flex-wrap:wrap}
+body.hunger-experiment-active #all .lab-cuisine{border:1px solid rgba(36,190,244,.65);border-radius:12px;background:rgba(3,22,42,.88);color:#e8f8ff;padding:12px 17px;font-weight:750;cursor:pointer}
+body.hunger-experiment-active #all .lab-cuisine.active{border-color:var(--hangry-lab-accent);background:color-mix(in srgb,var(--hangry-lab-accent) 26%,#0b172c);box-shadow:0 0 17px var(--hangry-lab-glow)}
+body.hunger-experiment-active #all .lab-sort-label{white-space:nowrap;color:#d7f0ff;font-size:14px}
+body.hunger-experiment-active #all #lab-results-sort{padding:12px;border-radius:12px;background:#071b31;border:1px solid #2588b6;color:white;font-size:15px}
+body.hunger-experiment-active #all #all-list{display:grid;gap:13px}
+body.hunger-experiment-active #all .result-card{display:flex!important;align-items:center!important;gap:20px!important;min-height:126px!important;padding:16px 22px!important;border:1px solid rgba(35,194,244,.48)!important;border-left:3px solid var(--hangry-lab-accent)!important;border-radius:17px!important;background:linear-gradient(100deg,rgba(5,26,48,.95),rgba(4,19,38,.94))!important;box-shadow:0 6px 20px rgba(0,0,0,.19)!important}
+body.hunger-experiment-active #all .result-art{flex:0 0 105px!important;width:105px!important;height:95px!important;display:grid!important;place-items:center!important;border-radius:13px!important;background:linear-gradient(145deg,#173952,#06192c)!important;font-size:50px!important}
+body.hunger-experiment-active #all .result-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+body.hunger-experiment-active #all .result-body strong{font-size:clamp(19px,1.65vw,25px)!important;color:white}
+body.hunger-experiment-active #all .result-meta{color:var(--hangry-lab-accent)!important;font-weight:800}
+body.hunger-experiment-active #all .result-address{color:#b7cfe0}
+body.hunger-experiment-active #all .result-actions{display:flex;flex-wrap:wrap;gap:8px}
+body.hunger-experiment-active #all .result-btn{border:1px solid #2aa5d6!important;border-radius:9px!important;background:rgba(4,31,56,.72)!important;color:#dff5ff!important;padding:9px 13px!important}
+body.hunger-experiment-active #all .result-btn:hover{box-shadow:0 0 12px rgba(25,202,249,.4)!important}
+body.hunger-experiment-active #all>.back{color:#aee7ff;position:relative;z-index:2;margin:0 0 8px!important}
+body.hunger-experiment-active #all>.hangry-reset-everywhere{position:relative!important;float:right!important;margin:0!important;z-index:4!important}
+@media(max-width:760px){body.hunger-experiment-active #all.screen.active{padding-top:clamp(195px,62vw,310px)!important;padding-left:12px!important;padding-right:12px!important}body.hunger-experiment-active #all.screen.active::before{height:650px!important;background-size:100% 100%,auto clamp(330px,85vw,500px)!important}body.hunger-experiment-active #all .lab-results-controls{flex-direction:column;align-items:stretch}body.hunger-experiment-active #all .lab-cuisine-filters{flex-wrap:nowrap;overflow-x:auto;padding:6px 0}body.hunger-experiment-active #all .lab-cuisine{white-space:nowrap}body.hunger-experiment-active #all .lab-sort-label{align-self:flex-end}body.hunger-experiment-active #all .result-card{padding:12px!important;gap:12px!important;align-items:flex-start!important}body.hunger-experiment-active #all .result-art{flex-basis:64px!important;width:64px!important;height:74px!important;font-size:36px!important}body.hunger-experiment-active #all .result-actions{gap:6px}body.hunger-experiment-active #all .result-btn{font-size:12px;padding:8px!important}body.hunger-experiment-active #all>.hangry-reset-everywhere{float:none!important;display:block!important;margin:0 0 12px auto!important}}
+
+body.hunger-experiment-active #all .result-card[hidden]{display:none!important}

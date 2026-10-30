@@ -1,0 +1,5 @@
+/* V1.4.36: approved transparent horizontal header logo, uncropped. */
+header.top .logo{flex:0 0 auto!important;padding:2px 6px!important;min-width:0!important;line-height:0!important;overflow:visible!important;align-self:center!important}
+header.top .logo img{display:block!important;width:clamp(205px,24vw,365px)!important;height:auto!important;max-height:76px!important;max-width:100%!important;object-fit:contain!important;object-position:left center!important;aspect-ratio:2048/682!important}
+@media(max-width:900px){header.top .logo img{width:clamp(170px,33vw,285px)!important;max-height:68px!important}}
+@media(max-width:560px){header.top .logo{padding:2px 0!important}header.top .logo img{width:clamp(160px,51vw,235px)!important;max-height:60px!important}}
