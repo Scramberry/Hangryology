@@ -1,0 +1,34 @@
+/* v1.4.30: compact, seamless How It Works; keeps existing artwork and text */
+#home .home-how.how-lab-v149 { height:auto!important;min-height:0!important;padding-bottom:30px!important;overflow:visible!important; }
+#home .home-how .how-stacked { gap:clamp(2px,1vw,12px)!important;max-width:1080px!important;margin:16px auto 12px!important;padding:0 clamp(12px,3vw,34px)!important; }
+#home .home-how .how-stack-row,
+#home .home-how .how-stack-row:nth-child(even) {
+ min-height:0!important;gap:clamp(10px,2.6vw,32px)!important;
+ padding:0 clamp(5px,1.4vw,14px)!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;backdrop-filter:none!important;
+ grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important;
+}
+#home .home-how .how-stack-row:nth-child(even) { grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)!important; }
+#home .home-how .how-stack-art {
+ width:100%!important;max-width:410px!important;height:clamp(170px,18vw,230px)!important;
+ background-size:400% 100%!important;
+ -webkit-mask-image:radial-gradient(ellipse 67% 64% at 50% 50%,#000 38%,rgba(0,0,0,.9) 58%,transparent 100%)!important;
+ mask-image:radial-gradient(ellipse 67% 64% at 50% 50%,#000 38%,rgba(0,0,0,.9) 58%,transparent 100%)!important;
+}
+#home .home-how .how-stack-row:nth-child(odd) .how-stack-art{margin-right:auto!important}
+#home .home-how .how-stack-row:nth-child(even) .how-stack-art{margin-left:auto!important}
+#home .home-how .how-stack-text h3{font-size:clamp(22px,2.4vw,34px)!important;margin:9px 0 8px!important}
+#home .home-how .how-stack-text p{font-size:clamp(14px,1.2vw,17px)!important;line-height:1.45!important}
+#home .home-how .how-stack-number{width:44px!important;height:44px!important;font-size:18px!important}
+@media(max-width:760px){
+ #home .home-how .how-stacked{gap:12px!important;margin:12px auto!important;padding:0 12px!important}
+ #home .home-how .how-stack-row,#home .home-how .how-stack-row:nth-child(even){
+  display:flex!important;flex-direction:column!important;gap:0!important;padding:0 8px 12px!important;
+  background:transparent!important;box-shadow:none!important;border:0!important;
+ }
+ #home .home-how .how-stack-art{height:clamp(160px,48vw,230px)!important;max-width:340px!important;margin:0 auto!important}
+ #home .home-how .how-stack-text{text-align:center!important}
+ #home .home-how .how-stack-row:nth-child(even) .how-stack-text{text-align:center!important}
+ #home .home-how .how-stack-text h3{margin:7px 0!important}
+}

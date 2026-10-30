@@ -196,18 +196,24 @@ async function search(){
  void runServer(endpoints[1],1);
 }
 window.hangryLaunchExperiment=function(zip,level){
- const z=String(zip||'').trim();
- if(!/^\\d{5}$/.test(z))return false;
- $('#zip').value=z;
- $('#hangry-range').value=String(level);
- $('#hangry-range').dispatchEvent(new Event('input'));
- const radius=$('#radius');
- radius.value=level===5?'3':level===4?'5':level===3?'10':'15';
- if(radius.value!==String(level===5?3:level===4?5:level===3?10:15))radius.value='10';
+ const z=String(zip??'').trim();
+ const n=Math.max(1,Math.min(5,Number(level)||3));
+ if(!/^\d{5}$/.test(z))return {ok:false,message:'Please enter a five-digit US ZIP code.'};
+ const setupZip=document.getElementById('zip');
+ const meter=document.getElementById('hangry-range');
+ const radius=document.getElementById('radius');
+ if(!setupZip||!meter||!radius)return {ok:false,message:'Search controls are missing. Refresh the page.'};
+ setupZip.value=z;
+ meter.value=String(n);
+ meter.dispatchEvent(new Event('input',{bubbles:true}));
+ const requestedRadius=String(n===5?3:n===4?5:n===3?10:15);
+ if([...radius.options].some(option=>option.value===requestedRadius))radius.value=requestedRadius;
  mode='browse';
  window.hangryExperimentActive=true;
- search();
- return true;
+ // search() is asynchronous. Starting it is not the same as finishing it;
+ // ZIP lookup and Overpass failures are handled on the loading/error screens.
+ void search();
+ return {ok:true};
 };
 const cancelSearch=()=>{searchGeneration++;stopActiveRequests();show('setup')};
 $('#cancel-search')?.addEventListener('click',cancelSearch);
