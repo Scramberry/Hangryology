@@ -18,7 +18,17 @@
   const data=restaurants.filter(matches);
   if(sort==='distance')data.sort((a,b)=>(a.manual?Infinity:a.miles)-(b.manual?Infinity:b.miles));
   if(sort==='name')data.sort((a,b)=>a.name.localeCompare(b.name));
-  document.getElementById('all-count').textContent=String(data.length);
+  const hunger=window.hangryExperimentActive===true;
+  const level=Math.max(1,Math.min(5,Number(document.getElementById('hangry-range').value)||3));
+  const words=['light bite','snack','meal','quick meal','emergency food'];
+  root.querySelector('.lab-matches-title').innerHTML=hunger?`Your shortlist: <span class="count-pill" id="all-count">${data.length}</span> ${words[level-1]} pick${data.length===1?'':'s'}`:`We found <span class="count-pill" id="all-count">${data.length}</span> delicious matches!`;
+  root.querySelector('.lab-results-intro').textContent=hunger?[
+   'Lighter bites and cafés, with fewer repeat chains.',
+   'Snack-friendly options nearby, with fewer repeat chains.',
+   'Substantial meals, narrowed down to an easier decision.',
+   'A few nearby quick-food choices. Menus and wait times need confirmation.',
+   'Your nearest quick-food shortlist. Live wait times are not available.'
+  ][level-1]:'Here are the nearby restaurants discovered by Byte and Bunsen.';
   const i=Math.max(0,Math.min(4,(Number(document.body.dataset.hungerLevel)||3)-1));
   root.querySelector('.hunger-title').textContent=themes[i][0];
   root.querySelector('.hunger-subtitle').textContent=themes[i][1];

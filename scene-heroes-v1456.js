@@ -7,6 +7,8 @@
  function update(){
   const active=window.hangryExperimentActive===true;
   const n=Math.max(1,Math.min(5,Number(document.getElementById('hangry-range').value)||3));
+  document.getElementById('other').textContent=active?'🔎 Explore Your Shortlist':'🔎 Explore All Matches';
+  document.getElementById('view-matches').textContent=active?'🔎 View shortlist':'🔎 View all matches';
   for(const id of screenIds){
    const section=document.getElementById(id);let hero=section.querySelector('.level-scene-hero');
    if(!hero){

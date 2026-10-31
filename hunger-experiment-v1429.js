@@ -7,11 +7,11 @@
  if(!form||!slider||!zip||!button||!note)return;
  const actions=['🧪 BEGIN SNACK EXPERIMENT →','🔬 INITIATE SNACK PROTOCOL →','⚡ LAUNCH HUNGER EXPERIMENT →','🚀 ACTIVATE RAPID FOOD PROTOCOL →','🚨 INITIATE EMERGENCY FOOD PROTOCOL →'];
  const notes=[
-  'Light bites and cafés take priority.',
-  'Casual eats, sandwiches and snacks get a boost.',
-  'Substantial meals get priority.',
-  'Closer quick-service restaurants move to the top.',
-  'Emergency! Closest quick-food options first. Live wait times are not available.'
+  'Up to 12 light bites and cafés nearby.',
+  'Up to 10 nearby snack picks, with fewer repeat chains.',
+  'Up to 8 substantial meal picks.',
+  'Up to 6 nearby quick-food picks.',
+  'Emergency! Up to 4 nearest quick-food picks. Live wait times are not available.'
  ];
  const titles=['THE SNACK LAB','SNACK ALERT','HUNGER WARNING','RAPID FOOD RESPONSE','CODE RED EMERGENCY'];
  const subtitles=[

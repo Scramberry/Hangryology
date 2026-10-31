@@ -181,6 +181,31 @@ function openingStatus(tags, now=new Date()){
  }
  return {state:open?'open':recognized?'closed':'unknown',label:open?'Listed as open now':'Listed as closed now'};
 }
+// Meter experiments choose a small, hunger-specific shortlist. Browse stays complete.
+function curateHungerMatches(candidates,level){
+ const n=Math.max(1,Math.min(5,Number(level)||3)),limit=[12,10,8,6,4][n-1];
+ const suitable=r=>{
+  const type=String(r.type||'').toLowerCase(),amenity=r.tags?.amenity;
+  if(n===1)return ['coffee','cafe','dessert','salad','breakfast','sandwich'].includes(type)||amenity==='cafe';
+  if(n===2)return ['sandwich','pizza','mexican','burger','coffee','cafe','dessert','fast_food'].includes(type)||amenity==='cafe';
+  if(n===3)return !['coffee','cafe','dessert','ice_cream','bakery'].includes(type)&&(amenity==='restaurant'||['burger','pizza','chicken','mexican','italian','chinese','thai','indian','steak','sushi','seafood'].includes(type));
+  return amenity==='fast_food'||['burger','pizza','sandwich','chicken','fast_food'].includes(type);
+ };
+ const preferred=candidates.filter(suitable);
+ // When listings lack useful cuisine data, still offer the nearest available options.
+ const pool=[...(preferred.length?preferred:candidates)].sort((a,b)=>a.miles-b.miles||a.name.localeCompare(b.name));
+ const result=[],brands=new Set(),types=new Map();
+ const identity=r=>String(r.tags?.['brand:wikidata']||r.tags?.brand||r.name).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ function take(r,diverse){
+  const brand=identity(r),type=r.type||'other';
+  if(result.length>=limit||brands.has(brand)||(diverse&&(types.get(type)||0)>=3))return;
+  result.push(r);brands.add(brand);types.set(type,(types.get(type)||0)+1);
+ }
+ for(const r of pool)take(r,n<=3);
+ // Fill remaining slots without adding duplicate branches of the same chain.
+ for(const r of pool)take(r,false);
+ return result;
+}
 function presentResults(data,point,miles){
  document.dispatchEvent(new CustomEvent('hangry:search-stage',{detail:{stage:'results'}}));
  restaurants=getRestaurantsFromData(data,point,miles).filter(r=>openingStatus(r.tags).state!=='closed');
@@ -207,20 +232,10 @@ function presentResults(data,point,miles){
  }
  if(window.hangryExperimentActive){
   const level=Number($('#hangry-range').value)||3;
-  const score=r=>{
-   const type=String(r.type||'').toLowerCase(),amenity=String(r.tags?.amenity||'');
-   const light=['coffee','cafe','dessert','salad','breakfast','sandwich'].includes(type);
-   const snack=['sandwich','pizza','mexican','burger','coffee','cafe','dessert','fast_food'].includes(type)||amenity==='cafe';
-   const substantial=amenity==='restaurant'||['burger','mexican','italian','chinese','thai','indian','steak','sushi'].includes(type);
-   const quick=amenity==='fast_food'||['burger','pizza','sandwich','chicken','fast_food'].includes(type);
-   const match=[light,snack,substantial,quick,quick][level-1];
-   const distanceWeight=[.6,.9,1.1,2.5,4][level-1];
-   return (match?0:level>=4?6:2)+r.miles*distanceWeight;
-  };
-  restaurants.sort((a,b)=>score(a)-score(b));
+  restaurants=curateHungerMatches(restaurants,level);
  }else{
   restaurants.sort((a,b)=>a.miles-b.miles);
-  if(+$('#hangry-range').value>=4){
+  if(mode!=='browse'&&+$('#hangry-range').value>=4){
    const fast=restaurants.filter(r=>r.tags.amenity==='fast_food'||r.miles<=3);
    if(fast.length)restaurants=fast;
   }
@@ -328,7 +343,7 @@ window.hangryLaunchExperiment=function(zip,level){
  setupZip.value=z;
  meter.value=String(n);
  meter.dispatchEvent(new Event('input',{bubbles:true}));
- const requestedRadius=String(n===5?3:n===4?5:n===3?10:15);
+ const requestedRadius=String(n>=4?3:5);
  if([...radius.options].some(option=>option.value===requestedRadius))radius.value=requestedRadius;
  mode='browse';
  window.hangryExperimentActive=true;
@@ -343,7 +358,7 @@ $('#cancel-search')?.addEventListener('click',cancelSearch);
 let spinGeneration=0;let wheelItems=[];let wheelTargetSize=8;const rejected=new Set(),locked=new Set();let rejectionHistory=[];
 const colors=['#e65a31','#144e73','#c23750','#f0a53a','#147e79','#754bb5','#c64a27','#2e6090'];
 const eligible=()=>restaurants.filter(r=>!rejected.has(r.id));
-function updateWheelStatus(){const n=eligible().length;$('#match-title').textContent=`${n} restaurants in the running!`;$('#match-note').textContent=`${wheelItems.length} on the wheel • ${restaurants.length} total matches • ${rejected.size} rejected`;$('#all-count').textContent=String(restaurants.length);$('#wheel-status').textContent=`🔒 ${locked.size} locked · 🚫 ${rejected.size} rejected · ${n} eligible. No new restaurant search needed.`;$('#spin').disabled=spinning||!wheelItems.length;$$('#wheel-screen .wheel-tools button,#contenders button,#manual-contender-form button,#manual-contender-form input').forEach(b=>b.disabled=spinning);$('#wheel-undo').classList.toggle('hidden',!rejectionHistory.length);}
+function updateWheelStatus(){const n=eligible().length;$('#match-title').textContent=window.hangryExperimentActive?`${n} shortlisted choices in the running!`:`${n} restaurants in the running!`;$('#match-note').textContent=`${wheelItems.length} on the wheel • ${restaurants.length} total matches • ${rejected.size} rejected`;$('#all-count').textContent=String(restaurants.length);$('#wheel-status').textContent=`🔒 ${locked.size} locked · 🚫 ${rejected.size} rejected · ${n} eligible. No new restaurant search needed.`;$('#spin').disabled=spinning||!wheelItems.length;$$('#wheel-screen .wheel-tools button,#contenders button,#manual-contender-form button,#manual-contender-form input').forEach(b=>b.disabled=spinning);$('#wheel-undo').classList.toggle('hidden',!rejectionHistory.length);}
 function shuffleWheel(){const keep=wheelItems.filter(r=>locked.has(r.id)&&!rejected.has(r.id)).slice(0,8);const pool=eligible().filter(r=>!keep.some(k=>k.id===r.id));for(let i=pool.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1));[pool[i],pool[k]]=[pool[k],pool[i]];}wheelItems=[...keep,...pool.slice(0,Math.max(0,wheelTargetSize-keep.length))];rotation=0;drawWheel();renderContenders();updateWheelStatus();}
 function prepareWheel(){wheelTargetSize=8;shuffleWheel();renderPlaces('#all-list',restaurants)}
 function renderContenders(){const el=$('#contenders');el.innerHTML=wheelItems.map(r=>`<div class="contender-row"><div><strong>${escapeHtml(r.name)}</strong><small>📍 ${r.manual?'Distance unverified':r.miles.toFixed(1)+' mi'} · ${escapeHtml(r.type.replace('_',' '))}</small><a class="contender-map" href="${escapeHtml(mapUrl(r))}" target="_blank" rel="noopener noreferrer">📍 Directions</a>${openingStatus(r.tags).state==='unknown'?'<small class="hours-unconfirmed">Hours unconfirmed — verify before visiting</small>':'<small class="hours-open">Listed as open now</small>'}</div><div class="contender-actions"><button class="result-btn lock-choice" data-id="${escapeHtml(r.id)}" aria-label="${locked.has(r.id)?'Unlock':'Lock'} ${escapeHtml(r.name)}">${locked.has(r.id)?'🔒 Locked':'🔓 Lock'}</button><button class="result-btn remove-choice" data-id="${escapeHtml(r.id)}" aria-label="Remove ${escapeHtml(r.name)}">✕ Remove</button></div></div>`).join('')||`<p class="muted">${eligible().length?'Your wheel is empty. Use Refill wheel to 8, or add a restaurant from all matches.':'Every restaurant has been rejected. Reset rejects to restore your choices.'}</p>`;
