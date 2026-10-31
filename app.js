@@ -97,9 +97,45 @@ function progress(message){const el=$('#loading-text');if(el)el.textContent=mess
 function getRestaurantsFromData(data,point,miles){
  const seen=new Set();return (data.elements||[]).map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!(['quiz','spin','browse'].includes(mode)&&soloExcluded.has(r.type))&&!(mode==='date'&&excluded.has(r.type))&&!(mode==='date'&&excluded2.has(r.type))});
 }
+// Conservative opening-hours check: only exclude when a supported schedule says closed.
+// Unparseable, missing, or complex schedules stay eligible as unconfirmed.
+function openingStatus(tags, now=new Date()){
+ const raw=String(tags?.opening_hours||'').trim();
+ if(!raw)return {state:'unknown',label:'Hours not listed — please confirm before visiting'};
+ if(/^24\/7$/i.test(raw))return {state:'open',label:'Listed open 24 hours'};
+ const days=['Su','Mo','Tu','We','Th','Fr','Sa'];
+ const today=now.getDay(),minute=now.getHours()*60+now.getMinutes();
+ const chunks=raw.split(';').map(x=>x.trim()).filter(Boolean);
+ let recognized=false, open=false;
+ for(const chunk of chunks){
+  // Reject advanced OSM syntax instead of mistakenly excluding restaurants.
+  if(/PH|SH|sunrise|sunset|week|\[|\]|\+|\"|\b(?:open|unknown)\b/i.test(chunk))return {state:'unknown',label:'Listed hours need confirmation'};
+  const m=chunk.match(/^(?:(Mo|Tu|We|Th|Fr|Sa|Su)(?:-(Mo|Tu|We|Th|Fr|Sa|Su))?(?:,(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?)*)?\s*(off|closed|(?:\d{1,2}:\d{2}-\d{1,2}:\d{2})(?:,\s*\d{1,2}:\d{2}-\d{1,2}:\d{2})*)$/i);
+  if(!m)return {state:'unknown',label:'Listed hours need confirmation'};
+  const times=m[3].toLowerCase();const daySpec=chunk.slice(0,chunk.length-m[3].length).trim();
+  const allowed=new Set();
+  if(!daySpec)for(let i=0;i<7;i++)allowed.add(i);
+  else for(const part of daySpec.split(',')){
+   const [start,end]=part.trim().split('-');const a=days.indexOf(start),b=end?days.indexOf(end):a;
+   if(a<0||b<0)return {state:'unknown',label:'Listed hours need confirmation'};
+   for(let d=a;;d=(d+1)%7){allowed.add(d);if(d===b)break;}
+  }
+  recognized=true;
+  if(times==='off'||times==='closed')continue;
+  for(const slot of times.split(',')){
+   const tm=slot.trim().match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/);if(!tm)return {state:'unknown',label:'Listed hours need confirmation'};
+   const a=Number(tm[1])*60+Number(tm[2]),b=Number(tm[3])*60+Number(tm[4]);
+   if(a>1440||b>1440||Number(tm[2])>59||Number(tm[4])>59)return {state:'unknown',label:'Listed hours need confirmation'};
+   if(b>a){if(allowed.has(today)&&minute>=a&&minute<b)open=true;}
+   else if(b<a){if((allowed.has(today)&&minute>=a)||(allowed.has((today+6)%7)&&minute<b))open=true;}
+   else return {state:'unknown',label:'Listed hours need confirmation'};
+  }
+ }
+ return {state:open?'open':recognized?'closed':'unknown',label:open?'Listed as open now':'Listed as closed now'};
+}
 function presentResults(data,point,miles){
  document.dispatchEvent(new CustomEvent('hangry:search-stage',{detail:{stage:'results'}}));
- restaurants=getRestaurantsFromData(data,point,miles);
+ restaurants=getRestaurantsFromData(data,point,miles).filter(r=>openingStatus(r.tags).state!=='closed');
  const budget=Number(document.getElementById('food-budget')?.value||0);
  if(budget){restaurants=restaurants.filter(r=>{const p=priceInfo(r.tags);return !p.level||p.level<=budget});}
 
@@ -257,7 +293,7 @@ const eligible=()=>restaurants.filter(r=>!rejected.has(r.id));
 function updateWheelStatus(){const n=eligible().length;$('#match-title').textContent=`${n} restaurants in the running!`;$('#match-note').textContent=`${wheelItems.length} on the wheel • ${restaurants.length} total matches • ${rejected.size} rejected`;$('#all-count').textContent=String(restaurants.length);$('#wheel-status').textContent=`🔒 ${locked.size} locked · 🚫 ${rejected.size} rejected · ${n} eligible. No new restaurant search needed.`;$('#spin').disabled=spinning||!wheelItems.length;$('#wheel-undo').classList.toggle('hidden',!rejectionHistory.length);}
 function shuffleWheel(){const keep=wheelItems.filter(r=>locked.has(r.id)&&!rejected.has(r.id)).slice(0,8);const pool=eligible().filter(r=>!keep.some(k=>k.id===r.id));for(let i=pool.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1));[pool[i],pool[k]]=[pool[k],pool[i]];}wheelItems=[...keep,...pool.slice(0,Math.max(0,wheelTargetSize-keep.length))];rotation=0;drawWheel();renderContenders();updateWheelStatus();}
 function prepareWheel(){wheelTargetSize=8;shuffleWheel();renderPlaces('#all-list',restaurants)}
-function renderContenders(){const el=$('#contenders');el.innerHTML=wheelItems.map(r=>`<div class="contender-row"><div><strong>${escapeHtml(r.name)}</strong><small>📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</small></div><div class="contender-actions"><button class="result-btn lock-choice" data-id="${escapeHtml(r.id)}" aria-label="${locked.has(r.id)?'Unlock':'Lock'} ${escapeHtml(r.name)}">${locked.has(r.id)?'🔒 Locked':'🔓 Lock'}</button><button class="result-btn remove-choice" data-id="${escapeHtml(r.id)}" aria-label="Remove ${escapeHtml(r.name)}">✕ Remove</button></div></div>`).join('')||'<p class="muted">No contenders left. Reset rejected restaurants to try again.</p>';
+function renderContenders(){const el=$('#contenders');el.innerHTML=wheelItems.map(r=>`<div class="contender-row"><div><strong>${escapeHtml(r.name)}</strong><small>📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</small>${openingStatus(r.tags).state==='unknown'?'<small class="hours-unconfirmed">Hours unconfirmed — verify before visiting</small>':'<small class="hours-open">Listed as open now</small>'}</div><div class="contender-actions"><button class="result-btn lock-choice" data-id="${escapeHtml(r.id)}" aria-label="${locked.has(r.id)?'Unlock':'Lock'} ${escapeHtml(r.name)}">${locked.has(r.id)?'🔒 Locked':'🔓 Lock'}</button><button class="result-btn remove-choice" data-id="${escapeHtml(r.id)}" aria-label="Remove ${escapeHtml(r.name)}">✕ Remove</button></div></div>`).join('')||'<p class="muted">No contenders left. Reset rejected restaurants to try again.</p>';
 el.querySelectorAll('.lock-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.has(id)?locked.delete(id):locked.add(id);renderContenders();updateWheelStatus()}));
 el.querySelectorAll('.remove-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);wheelTargetSize=wheelItems.length;rotation=0;drawWheel();renderContenders();updateWheelStatus()}));}
 // v1.4.40: neon laboratory wheel; wheel selection and physics stay unchanged.
@@ -312,7 +348,7 @@ function safeWebsite(r){const raw=r.tags.website||r.tags['contact:website']||r.t
 function mapUrl(r){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+r.lat+','+r.lon)}`}
 function renderWinner(){if(!winner)return;$('#winner-name').textContent=winner.name;$('#winner-info').textContent=`📍 ${winner.miles.toFixed(1)} miles away · ${winner.type.replace('_',' ')}`;$('#winner-address').textContent=winner.address;$('#directions').href=mapUrl(winner);$('#favorite').textContent=favorites().some(x=>x.id===winner.id)?'♥ Saved':'♡ Save';
 const tags=winner.tags||{};const website=safeWebsite(winner);const menu=$('#winner-menu');menu.href=website||`https://www.google.com/search?q=${encodeURIComponent(winner.name+' menu '+winner.address)}`;menu.textContent=website?'🌐 Restaurant Website / Menu':'🔎 Find Menu Online';const phone=tags.phone||tags['contact:phone'];const call=$('#winner-call');call.classList.toggle('hidden',!phone);if(phone)call.href=`tel:${phone.replace(/[^+0-9]/g,'')}`;
-const details=[['🍽️ Cuisine',tags.cuisine||winner.type.replace('_',' ')],['🕒 Listed hours',tags.opening_hours||'Not available — confirm with restaurant'],['🥡 Takeout',tags.takeaway==='yes'?'Listed as available':tags.takeaway==='no'?'Listed as unavailable':'Not verified'],['🚗 Delivery',tags.delivery==='yes'?'Listed as available':tags.delivery==='no'?'Listed as unavailable':'Not verified'],['📞 Phone',phone||'Not listed'],['💵 Price',priceInfo(tags).label]];$('#winner-details').innerHTML=details.map(([label,val])=>`<div><small>${escapeHtml(label)}</small><strong>${escapeHtml(val)}</strong></div>`).join('');$('#undo-reject').classList.toggle('hidden',rejectionHistory.length===0);}
+const details=[['🍽️ Cuisine',tags.cuisine||winner.type.replace('_',' ')],['Listed hours',tags.opening_hours||'Not available — confirm with restaurant'],['🥡 Takeout',tags.takeaway==='yes'?'Listed as available':tags.takeaway==='no'?'Listed as unavailable':'Not verified'],['🚗 Delivery',tags.delivery==='yes'?'Listed as available':tags.delivery==='no'?'Listed as unavailable':'Not verified'],['📞 Phone',phone||'Not listed'],['💵 Price',priceInfo(tags).label]];$('#winner-details').innerHTML=details.map(([label,val])=>`<div><small>${escapeHtml(label)}</small><strong>${escapeHtml(val)}</strong></div>`).join('');$('#undo-reject').classList.toggle('hidden',rejectionHistory.length===0);}
 $('#favorite').addEventListener('click',()=>{let a=favorites();a.some(x=>x.id===winner.id)?a=a.filter(x=>x.id!==winner.id):a.push(winner);saveFavorites(a);renderWinner()});
 $('#again').addEventListener('click',()=>{show('wheel-screen');rotation=0;drawWheel()});$('#other').addEventListener('click',()=>show('all'));$('#view-matches').addEventListener('click',()=>show('all'));$('#reshuffle').addEventListener('click',shuffleWheel);
 $('#reject-winner').addEventListener('click',()=>{if(!winner)return;const id=winner.id;rejected.add(id);rejectionHistory.push(id);locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);const replacement=eligible().find(r=>!wheelItems.some(w=>w.id===r.id));if(replacement)wheelItems.push(replacement);if(!wheelItems.length){show('wheel-screen');renderContenders();updateWheelStatus();alert('🐶 Bunsen says: You rejected everything! Reset rejects to start again.');return}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen');});

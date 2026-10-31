@@ -1,0 +1,17 @@
+/* v1.4.48: Restore the approved neon wallpaper behind casino hero and results. */
+#wheel-screen.screen.active,#winner.screen.active{background:transparent!important;isolation:isolate!important;position:relative!important}
+#wheel-screen.screen.active::before,#winner.screen.active::before{
+ content:""!important;position:absolute!important;pointer-events:none!important;inset:0!important;z-index:-1!important;
+ background-color:#06162d!important;
+ background-image:linear-gradient(to bottom,transparent 0px,transparent 470px,rgba(3,14,34,.18) 570px,rgba(3,14,34,.7) 760px,#06162d 940px,rgba(3,14,34,.42) 1120px,rgba(3,14,34,.26) 100%),url('hangry-casino-wheel-v1442.webp'),linear-gradient(to bottom,#06162d 0px,rgba(3,14,34,.64) 880px,rgba(3,14,34,.34) 1100px,rgba(3,14,34,.26) 100%),url('hangry-neon-wallpaper-v1444.webp')!important;
+ background-position:center top,center top,center top,center 950px!important;
+ background-size:100% 100%,100% auto,100% 100%,100% auto!important;
+ background-repeat:no-repeat,no-repeat,no-repeat,repeat-y!important;
+}
+#winner .lab-winner-card{background:linear-gradient(155deg,rgba(4,23,49,.94),rgba(5,18,42,.91))!important;backdrop-filter:blur(12px)}
+#winner .winner-title,#winner .winner-card .eyebrow{letter-spacing:.075em}
+#winner .jackpot-ornament{display:table;margin:8px auto 22px;padding:11px 32px;border:1px solid #ffad45;border-radius:999px;background:linear-gradient(90deg,#4c270c,#9b4b11,#4c270c);color:#ffe3a6;font:900 clamp(17px,2.3vw,26px)/1.2 system-ui,sans-serif;letter-spacing:.18em;text-shadow:0 0 13px #ff9c38;box-shadow:0 0 24px #ff941a55}
+#winner .trophy,#winner .winner-confetti{display:none!important}
+.hours-unconfirmed{display:block!important;color:#ffd39b!important;font-weight:750!important;margin-top:5px}
+.hours-open{display:block!important;color:#7ff5cf!important;font-weight:650!important;margin-top:5px}
+@media(max-width:700px){#wheel-screen.screen.active::before,#winner.screen.active::before{background-size:100% 100%,auto 640px,100% 100%,auto 950px!important;background-position:center top,35% top,center top,center 760px!important}}
