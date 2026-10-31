@@ -1,0 +1,16 @@
+/* v1.4.50 — one approved neon wallpaper on all non-home screens */
+body:has(.screen.active:not(#home)){background:#04142b url("hangry-neon-wallpaper-v1450.png") center top / 100% auto repeat-y!important}
+body:has(.screen.active:not(#home)) main,body:has(.screen.active:not(#home)) .screen.active{background:transparent!important}
+.screen.active:not(#home)::before{background-image:linear-gradient(180deg,rgba(4,15,33,.42),rgba(4,15,33,.62)),url("hangry-neon-wallpaper-v1450.png")!important;background-size:100% 100%,100% auto!important;background-repeat:no-repeat,repeat-y!important}
+#all.active::after{display:none!important}
+#all.active #all-list{display:flex!important;flex-direction:column!important;gap:12px!important;max-width:1300px!important;margin:22px auto!important}
+#all.active #all-list .v1450-row{display:flex!important;align-items:center!important;gap:18px!important;min-height:100px!important;padding:15px 20px!important;border:1px solid #167da8!important;border-radius:14px!important;background:rgba(2,18,39,.95)!important;color:white!important}
+#all.active #all-list .v1450-row>img{width:70px!important;height:70px!important;max-width:70px!important;max-height:70px!important;object-fit:contain!important;flex:none!important}
+.v1450-row-info{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}.v1450-row-info strong{font-size:1.25rem}.v1450-row-info small{color:#b8d7e9;font-size:.85rem}
+.v1450-links{display:flex;gap:8px;flex-wrap:wrap}.v1450-links a,.v1450-links button{border:1px solid #19bfff;background:#092c49;color:#effaff;padding:10px 12px;border-radius:9px;text-decoration:none;cursor:pointer;font:inherit}
+#all.active .lab-results-controls,#all.active .lab-action-row{position:relative!important;z-index:3!important}
+#winner .jackpot-banner{display:block;width:min(100%,1100px);height:auto;margin:0 auto 8px;object-fit:contain;max-height:330px}
+#winner .jackpot-ornament{display:none!important}
+#winner .winner-card{overflow:hidden}
+#wheel-screen.active::after,#winner.active::after{background-image:linear-gradient(to bottom,transparent 35%,#04142b 91%,transparent),url("hangry-casino-wheel-v1442.webp")!important}
+@media(max-width:800px){#all.active #all-list .v1450-row{flex-wrap:wrap!important}.v1450-links{width:100%}#winner .jackpot-banner{max-height:230px}}
