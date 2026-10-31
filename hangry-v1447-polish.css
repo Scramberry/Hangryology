@@ -1,0 +1,40 @@
+/* v1.4.47: layered navy buffer between hero and neon wallpaper, excluding homepage */
+body:has(.screen.active:not(#home)) {background-color:#031329}
+body .screen.active:not(#home){isolation:isolate}
+/* The navy band is translucent and does not replace any approved imagery. */
+body .screen.active:not(#home)::before{background-color:#06172c!important}
+/* Casino scene: preserve image on top, gradually blend into navy, then neon below. */
+#wheel-screen.screen.active::before,#winner.screen.active::before{
+ background-image:linear-gradient(to bottom,rgba(2,13,31,.03) 0%,rgba(3,16,36,.04) 36%,rgba(3,17,39,.38) 57%,#06162d 73%,rgba(5,20,43,.68) 83%,rgba(4,16,37,.2) 100%),url('hangry-casino-wheel-v1442.webp')!important;
+ background-repeat:no-repeat!important;background-size:100% 100%,100% auto!important;background-position:center top!important;
+}
+/* Masked hero artwork remains vivid; navy transition extends below its fade. */
+body[data-hangry-mode="spin"] #setup.screen.active::after,
+body[data-hangry-mode="date"] #chemistry-results-screen.screen.active::after{
+ -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 62%,rgba(0,0,0,.86) 72%,transparent 100%)!important;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 62%,rgba(0,0,0,.86) 72%,transparent 100%)!important;
+}
+body[data-hangry-mode="spin"] #setup.screen.active,
+body[data-hangry-mode="date"] #chemistry-results-screen.screen.active{background-image:linear-gradient(to bottom,transparent 0%,#05172e 440px,rgba(4,17,37,.8) 630px,transparent 950px)!important}
+/* Keep the existing neon wallpaper but add a readable navy breathing zone. */
+#all.screen.active,#quiz.screen.active,#chemistry-player1.screen.active,#chemistry-player2.screen.active{
+ background-image:linear-gradient(to bottom,rgba(4,16,37,.68) 0%,rgba(5,19,42,.82) 230px,rgba(5,19,42,.38) 580px,transparent 950px)!important;
+}
+/* Results: compact restaurant cards, never oversized cuisine artwork. */
+#all #all-list{display:flex!important;flex-direction:column!important;gap:14px!important;max-width:1200px!important;margin:20px auto 0!important}
+#all #all-list .result-card{display:flex!important;align-items:flex-start!important;min-height:0!important;gap:18px!important;padding:16px!important;border-radius:18px!important;background:rgba(4,22,45,.92)!important;overflow:hidden!important}
+#all #all-list .result-art{width:96px!important;height:96px!important;min-width:96px!important;max-width:96px!important;min-height:96px!important;flex:0 0 96px!important;display:grid!important;place-items:center!important;background:rgba(10,51,80,.65)!important;border-radius:15px!important;overflow:hidden!important}
+#all #all-list .result-art img,#all #all-list .result-cuisine-icon{width:86px!important;height:86px!important;max-width:86px!important;max-height:86px!important;object-fit:contain!important;position:static!important;transform:none!important}
+#all #all-list .result-body{flex:1!important;min-width:0!important;display:flex!important;flex-direction:column!important;gap:6px!important}
+#all #all-list .result-body>strong{font-size:clamp(20px,2vw,27px)!important}
+#all #all-list .result-price{font-size:.9rem;color:#ffc487;font-weight:700}
+#all #all-list .result-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+#all #all-list .byte-meter{max-width:560px;width:100%;margin-top:10px}
+#all .lab-cuisine-filters{scrollbar-width:none!important}
+#all .lab-cuisine-filters::-webkit-scrollbar{display:none!important}
+/* Budget preference */
+.budget-selector{margin:20px 0;padding:16px 20px;border:1px solid #24caff88;border-radius:16px;background:rgba(4,25,51,.85)}
+.budget-selector label{display:block;font-weight:900;font-size:1.08rem;color:#e9f9ff;margin-bottom:5px}
+.budget-selector p{font-size:.82rem;color:#b4cfdf;margin:0 0 10px}
+.budget-selector select{display:block;width:100%;max-width:570px;padding:13px 14px;border:1px solid #19cfff;border-radius:12px;background:#071d38;color:#f4faff;font:inherit}
+@media(max-width:650px){#all #all-list .result-card{gap:10px!important;padding:12px!important}#all #all-list .result-art{width:65px!important;height:65px!important;min-width:65px!important;max-width:65px!important;min-height:65px!important;flex-basis:65px!important}#all #all-list .result-art img,#all #all-list .result-cuisine-icon{width:60px!important;height:60px!important}#all #all-list .result-actions .result-btn{font-size:.78rem!important;padding:9px!important}}

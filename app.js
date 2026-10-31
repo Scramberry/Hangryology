@@ -11,6 +11,7 @@ function clearChips(id){$$('#'+id+' .chip').forEach((b,i)=>b.classList.toggle('s
 function resetExperiment(){
  searchGeneration++;stopActiveRequests();
  excluded.clear();excluded2.clear();soloExcluded.clear();
+ const budgetSelect=document.getElementById('food-budget');if(budgetSelect)budgetSelect.value='0';
  $$('[data-category], [data-category2], [data-category-solo]').forEach(b=>b.classList.remove('excluded'));
  ['service','solo-fries','solo-vibe','fries','vibe','fries2','vibe2'].forEach(clearChips);
  restaurants=[];wheelItems=[];wheelTargetSize=8;rejected.clear();locked.clear();rejectionHistory=[];
@@ -77,6 +78,14 @@ $('#chemistry-back1').addEventListener('click',()=>show('chemistry-player1'));
 $('#locate').addEventListener('click',()=>{if(!navigator.geolocation){alert('Location is not supported on this device.');return}navigator.geolocation.getCurrentPosition(p=>{geo={lat:p.coords.latitude,lon:p.coords.longitude,label:'Your location'};$('#zip').value='';alert('Location ready!')},()=>alert('Location permission was unavailable. You can enter a ZIP code instead.'),{timeout:12000})});
 function haversine(a,b,c,d){const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,z=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z))}
 function cuisineFor(tags){const raw=[tags.cuisine||'',tags.name||'',tags['name:en']||'',tags.amenity||''].join(' ').toLowerCase();if(tags.amenity==='fast_food')return 'fast_food';for(const [,,id] of categories){const words={burger:['burger','hamburger'],mexican:['mexican','taco','burrito'],chicken:['chicken','wings'],steak:['steak','steakhouse'],sandwich:['sandwich','sub'],salad:['salad','healthy'],breakfast:['breakfast','brunch','pancake'],seafood:['seafood','fish'],sushi:['sushi','japanese'],chinese:['chinese'],pizza:['pizza'],italian:['italian','pasta'],indian:['indian'],thai:['thai']}[id]||[];if(words.some(w=>raw.includes(w)))return id}return 'other'}
+function priceInfo(tags){
+ const raw=String(tags['price:range']||tags['price_range']||tags['price']||tags['charge']||'').trim();
+ if(!raw)return {level:0,label:'Price not listed'};
+ if(/^\${1,4}$/.test(raw))return {level:raw.length,label:raw};
+ const nums=raw.match(/\$\s*(\d+(?:\.\d+)?)/g);
+ if(nums&&nums.length){const amounts=nums.map(x=>Number(x.replace(/[^\d.]/g,'')));const avg=amounts.reduce((a,b)=>a+b,0)/amounts.length;return {level:avg<=15?1:avg<=30?2:avg<=60?3:4,label:raw.slice(0,44)};}
+ return {level:0,label:'Price not verified'};
+}
 function hasFries(name){return chainFries.some(c=>name.toLowerCase().includes(c))}
 function address(t){return [t['addr:housenumber'],t['addr:street'],t['addr:city']].filter(Boolean).join(' ')||'Address not listed — open directions'}
 const SEARCH_CACHE_KEY='hangryology_search_cache_v130';
@@ -86,11 +95,14 @@ function cacheRead(key){try{const obj=JSON.parse(localStorage.getItem(SEARCH_CAC
 function cacheWrite(key,elements){try{let obj=JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY)||'{}');obj[key]={saved:Date.now(),elements};const keys=Object.keys(obj).sort((a,b)=>obj[b].saved-obj[a].saved).slice(0,8);obj=Object.fromEntries(keys.map(k=>[k,obj[k]]));localStorage.setItem(SEARCH_CACHE_KEY,JSON.stringify(obj))}catch(e){console.warn('Restaurant cache unavailable:',e)}}
 function progress(message){const el=$('#loading-text');if(el)el.textContent=message;document.dispatchEvent(new CustomEvent('hangry:search-progress',{detail:{message}}))}
 function getRestaurantsFromData(data,point,miles){
- const seen=new Set();return (data.elements||[]).map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!(mode==='quiz'&&soloExcluded.has(r.type))&&!(mode==='date'&&excluded.has(r.type))&&!(mode==='date'&&excluded2.has(r.type))});
+ const seen=new Set();return (data.elements||[]).map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lon=e.lon??e.center?.lon,name=t.name||t['name:en'];if(!name||lat==null||lon==null)return null;return {id:`${e.type}-${e.id}`,name,lat,lon,address:address(t),type:cuisineFor(t),miles:haversine(point.lat,point.lon,lat,lon),tags:t}}).filter(Boolean).filter(r=>{const key=`${r.name.toLowerCase()}-${r.lat.toFixed(3)}-${r.lon.toFixed(3)}`;if(seen.has(key))return false;seen.add(key);return r.miles<=miles&&!(['quiz','spin','browse'].includes(mode)&&soloExcluded.has(r.type))&&!(mode==='date'&&excluded.has(r.type))&&!(mode==='date'&&excluded2.has(r.type))});
 }
 function presentResults(data,point,miles){
  document.dispatchEvent(new CustomEvent('hangry:search-stage',{detail:{stage:'results'}}));
  restaurants=getRestaurantsFromData(data,point,miles);
+ const budget=Number(document.getElementById('food-budget')?.value||0);
+ if(budget){restaurants=restaurants.filter(r=>{const p=priceInfo(r.tags);return !p.level||p.level<=budget});}
+
  if(mode==='quiz'){
   const fries=chosen('solo-fries'),vibe=chosen('solo-vibe');
   if(fries==='yes')restaurants=restaurants.filter(r=>hasFries(r.name));
@@ -260,7 +272,7 @@ function drawWheel(){
  const c=$('#wheel'),ctx=c.getContext('2d'),n=wheelItems.length;
  ctx.clearRect(0,0,640,640);if(!n)return;
  const cx=320,cy=320,r=289,step=2*Math.PI/n;
- const palette=['#07375b','#8c3b22','#113d62','#9c4c1c','#103a56','#853e32','#114d65','#86421d'];
+ const palette=['#005a9e','#db5a13','#0069a7','#ee6716','#0067a0','#d34a13','#0075ac','#f07817'];
  const accent=(document.body.dataset.hungerLevel||'3');
  const ring=['#4cf49a','#f9d45c','#ffa34b','#ff7445','#ff3c59'][Math.max(0,Math.min(4,Number(accent)-1))];
  ctx.save();ctx.translate(cx,cy);ctx.rotate(rotation);
@@ -268,11 +280,11 @@ function drawWheel(){
   const a=-Math.PI/2+i*step,b=a+step,mid=a+step/2;
   ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,a,b);ctx.closePath();
   const g=ctx.createRadialGradient(0,0,65,0,0,r);
-  g.addColorStop(0,'#07172b');g.addColorStop(.52,palette[i%palette.length]);g.addColorStop(1,i%2?'#b65a29':'#156c99');
+  g.addColorStop(0,'#06243e');g.addColorStop(.58,palette[i%palette.length]);g.addColorStop(1,i%2?'#ff8a30':'#13b9ee');
   ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=i%2?'#ffae4e':'#49d9ff';ctx.lineWidth=3;ctx.stroke();
   ctx.save();ctx.rotate(mid);ctx.translate(r*.64,0);ctx.rotate(Math.PI/2);
   const icon=labWheelIcon(wheelItems[i].type);
-  if(icon.complete&&icon.naturalWidth){ctx.shadowColor='#13d5ff';ctx.shadowBlur=12;ctx.drawImage(icon,-24,-62,48,48);ctx.shadowBlur=0}
+  if(icon.complete&&icon.naturalWidth){ctx.shadowColor='#13d5ff';ctx.shadowBlur=12;ctx.drawImage(icon,-34,-80,68,68);ctx.shadowBlur=0}
   // Compact two-line labels: keep restaurant names inside their own wedges.
   ctx.font='800 14px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillStyle='#fff';ctx.shadowColor='#00101d';ctx.shadowBlur=6;
@@ -300,7 +312,7 @@ function safeWebsite(r){const raw=r.tags.website||r.tags['contact:website']||r.t
 function mapUrl(r){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+r.lat+','+r.lon)}`}
 function renderWinner(){if(!winner)return;$('#winner-name').textContent=winner.name;$('#winner-info').textContent=`📍 ${winner.miles.toFixed(1)} miles away · ${winner.type.replace('_',' ')}`;$('#winner-address').textContent=winner.address;$('#directions').href=mapUrl(winner);$('#favorite').textContent=favorites().some(x=>x.id===winner.id)?'♥ Saved':'♡ Save';
 const tags=winner.tags||{};const website=safeWebsite(winner);const menu=$('#winner-menu');menu.href=website||`https://www.google.com/search?q=${encodeURIComponent(winner.name+' menu '+winner.address)}`;menu.textContent=website?'🌐 Restaurant Website / Menu':'🔎 Find Menu Online';const phone=tags.phone||tags['contact:phone'];const call=$('#winner-call');call.classList.toggle('hidden',!phone);if(phone)call.href=`tel:${phone.replace(/[^+0-9]/g,'')}`;
-const details=[['🍽️ Cuisine',tags.cuisine||winner.type.replace('_',' ')],['🕒 Listed hours',tags.opening_hours||'Not available — confirm with restaurant'],['🥡 Takeout',tags.takeaway==='yes'?'Listed as available':tags.takeaway==='no'?'Listed as unavailable':'Not verified'],['🚗 Delivery',tags.delivery==='yes'?'Listed as available':tags.delivery==='no'?'Listed as unavailable':'Not verified'],['📞 Phone',phone||'Not listed']];$('#winner-details').innerHTML=details.map(([label,val])=>`<div><small>${escapeHtml(label)}</small><strong>${escapeHtml(val)}</strong></div>`).join('');$('#undo-reject').classList.toggle('hidden',rejectionHistory.length===0);}
+const details=[['🍽️ Cuisine',tags.cuisine||winner.type.replace('_',' ')],['🕒 Listed hours',tags.opening_hours||'Not available — confirm with restaurant'],['🥡 Takeout',tags.takeaway==='yes'?'Listed as available':tags.takeaway==='no'?'Listed as unavailable':'Not verified'],['🚗 Delivery',tags.delivery==='yes'?'Listed as available':tags.delivery==='no'?'Listed as unavailable':'Not verified'],['📞 Phone',phone||'Not listed'],['💵 Price',priceInfo(tags).label]];$('#winner-details').innerHTML=details.map(([label,val])=>`<div><small>${escapeHtml(label)}</small><strong>${escapeHtml(val)}</strong></div>`).join('');$('#undo-reject').classList.toggle('hidden',rejectionHistory.length===0);}
 $('#favorite').addEventListener('click',()=>{let a=favorites();a.some(x=>x.id===winner.id)?a=a.filter(x=>x.id!==winner.id):a.push(winner);saveFavorites(a);renderWinner()});
 $('#again').addEventListener('click',()=>{show('wheel-screen');rotation=0;drawWheel()});$('#other').addEventListener('click',()=>show('all'));$('#view-matches').addEventListener('click',()=>show('all'));$('#reshuffle').addEventListener('click',shuffleWheel);
 $('#reject-winner').addEventListener('click',()=>{if(!winner)return;const id=winner.id;rejected.add(id);rejectionHistory.push(id);locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);const replacement=eligible().find(r=>!wheelItems.some(w=>w.id===r.id));if(replacement)wheelItems.push(replacement);if(!wheelItems.length){show('wheel-screen');renderContenders();updateWheelStatus();alert('🐶 Bunsen says: You rejected everything! Reset rejects to start again.');return}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen');});
@@ -312,8 +324,9 @@ function renderPlaces(target,arr){$(target).innerHTML=arr.map(r=>{
 const query=encodeURIComponent(r.name+' '+r.lat+','+r.lon);
 const menu=r.tags.website||r.tags['contact:website']||'';
 const safeMenu=/^https?:\/\//i.test(menu)?menu:'';
+const price=priceInfo(r.tags);
 const emoji=({burger:'🍔',pizza:'🍕',mexican:'🌮',chicken:'🍗',italian:'🍝',chinese:'🥡',sushi:'🍣',steak:'🥩',sandwich:'🥪',salad:'🥗',indian:'🍛',thai:'🍜',breakfast:'🍳',fast_food:'🍟',seafood:'🦐',other:'🍽️'})[r.type]||'🍽️';
-return `<article class="result-card"><div class="result-art" aria-hidden="true"><img class="result-cuisine-icon" src="cuisine-${({burger:"burger",pizza:"pizza",mexican:"mexican",chicken:"chicken",italian:"pizza",chinese:"asian",sushi:"sushi",steak:"steak",sandwich:"sandwich",salad:"healthy",indian:"indian",thai:"asian",breakfast:"breakfast",fast_food:"burger",seafood:"seafood",cafe:"coffee",coffee:"coffee",bakery:"dessert",dessert:"dessert",ice_cream:"dessert",american:"burger",other:"other"})[r.type]||"other"}-v1441.png" alt="" loading="lazy"></div><div class="result-body"><strong>${escapeHtml(r.name)}</strong><span class="result-meta">📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</span><span class="result-address">${escapeHtml(r.address)}</span><div class="result-actions"><a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query=${query}">📍 Directions</a>${safeMenu?`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="${escapeHtml(safeMenu)}">📖 Website / Menu</a>`:`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q=${encodeURIComponent(r.name+' menu near '+r.address)}">📖 Find Menu</a>`}<button class="result-btn add-wheel" data-wheel="${escapeHtml(r.id)}">🎡 Add to wheel</button></div></div></article>`}).join('')||'<p class="muted">No matches found.</p>';
+return `<article class="result-card"><div class="result-art" aria-hidden="true"><img class="result-cuisine-icon" src="cuisine-${({burger:"burger",pizza:"pizza",mexican:"mexican",chicken:"chicken",italian:"pizza",chinese:"asian",sushi:"sushi",steak:"steak",sandwich:"sandwich",salad:"healthy",indian:"indian",thai:"asian",breakfast:"breakfast",fast_food:"burger",seafood:"seafood",cafe:"coffee",coffee:"coffee",bakery:"dessert",dessert:"dessert",ice_cream:"dessert",american:"burger",other:"other"})[r.type]||"other"}-v1441.png" alt="" loading="lazy"></div><div class="result-body"><strong>${escapeHtml(r.name)}</strong><span class="result-meta">📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</span><span class="result-address">${escapeHtml(r.address)}</span><span class="result-price">💵 ${escapeHtml(price.label)}${price.level?" · Listed price information":" · Check menu for pricing"}</span><div class="result-actions"><a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query=${query}">📍 Directions</a>${safeMenu?`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="${escapeHtml(safeMenu)}">📖 Website / Menu</a>`:`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q=${encodeURIComponent(r.name+' menu near '+r.address)}">📖 Find Menu</a>`}<button class="result-btn add-wheel" data-wheel="${escapeHtml(r.id)}">🎡 Add to wheel</button></div></div></article>`}).join('')||'<p class="muted">No matches found.</p>';
 $$(`${target} .add-wheel`).forEach(b=>b.addEventListener('click',()=>{const r=restaurants.find(x=>x.id===b.dataset.wheel);if(!r)return;if(rejected.has(r.id)){rejected.delete(r.id);rejectionHistory=rejectionHistory.filter(x=>x!==r.id)}if(!wheelItems.some(x=>x.id===r.id)){if(wheelItems.length>=8){const i=wheelItems.findIndex(x=>!locked.has(x.id));if(i<0){alert("All eight contenders are locked. Unlock one to add another.");return}wheelItems.splice(i,1)}wheelItems.push(r);wheelTargetSize=wheelItems.length}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen')}));}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function renderSaved(){const a=favorites();$('#saved-list').innerHTML=a.map(r=>`<div class="place"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.address)}</small></div><button class="remove" data-id="${escapeHtml(r.id)}" title="Remove favorite">♥</button></div>`).join('')||'<div class="card"><p class="muted">No favorites yet. Spin the wheel and save a winner!</p></div>';$$('.remove').forEach(b=>b.addEventListener('click',()=>{saveFavorites(favorites().filter(x=>x.id!==b.dataset.id));renderSaved()}))}
