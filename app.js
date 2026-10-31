@@ -1,5 +1,5 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const categories=[['🍔','Burgers','burger'],['🍕','Pizza','pizza'],['🌮','Mexican','mexican'],['🍗','Chicken','chicken'],['🍝','Italian','italian'],['🥡','Chinese','chinese'],['🍣','Sushi','sushi'],['🥩','Steak','steak'],['🥪','Sandwiches','sandwich'],['🥗','Salads','salad'],['🍛','Indian','indian'],['🍜','Thai','thai'],['🍳','Breakfast','breakfast'],['🍟','Fast Food','fast_food'],['🦐','Seafood','seafood']];
+const categories=[['🍔','Burgers','burger'],['🍕','Pizza','pizza'],['🌮','Mexican','mexican'],['🍗','Chicken','chicken'],['🍝','Italian','italian'],['🥡','Chinese','chinese'],['🍣','Sushi','sushi'],['🥩','Steak','steak'],['🥪','Sandwiches','sandwich'],['🥗','Salads','salad'],['🍛','Indian','indian'],['🍜','Thai','thai'],['🍳','Breakfast','breakfast'],['🍟','Fast Food','fast_food'],['🦐','Seafood','seafood'],['☕','Coffee','coffee'],['🍩','Desserts','dessert'],['🍽️','Other','other']];
 const chainFries=['mcdonald','burger king','wendy','five guys','chick-fil-a','chick fil a','popeyes','culver','shake shack','sonic','checkers','rally','dairy queen','hardee','carls jr','jack in the box','whataburger','in-n-out','arbys','arby’s','kfc'];
 let mode='spin',excluded=new Set(),excluded2=new Set(),soloExcluded=new Set(),restaurants=[],rotation=0,spinning=false,winner=null,geo=null;
 const favorites=()=>JSON.parse(localStorage.getItem('dinnerRouletteFavorites')||'[]');
@@ -60,6 +60,24 @@ $('#reset-experiment').addEventListener('click',()=>{if(confirm('Reset the exper
 $('#reset-from-results').addEventListener('click',resetToHome);
 $('#cuisinesSolo').innerHTML=categories.map(([emoji,label,id])=>`<button class="food" data-category-solo="${id}"><span>${emoji}</span>${label}</button>`).join('');
 $$('[data-category-solo]').forEach(b=>b.addEventListener('click',()=>{const c=b.dataset.categorySolo;soloExcluded.has(c)?soloExcluded.delete(c):soloExcluded.add(c);b.classList.toggle('excluded',soloExcluded.has(c))}));
+// "Only" explicitly includes the chosen cuisine and excludes all others.
+// A normal tile tap continues to mean exclude, as before.
+function addOnlyControls(){
+ document.querySelectorAll('#cuisinesSolo [data-category-solo]').forEach(tile=>{
+  if(tile.querySelector('.only-cuisine'))return;
+  const btn=document.createElement('span');btn.className='only-cuisine';btn.textContent='ONLY';
+  btn.setAttribute('role','button');btn.setAttribute('tabindex','0');btn.setAttribute('aria-label','Show only '+tile.textContent.trim());
+  const apply=e=>{e.stopPropagation();e.preventDefault();const selected=tile.dataset.categorySolo;
+   document.querySelectorAll('#cuisinesSolo [data-category-solo]').forEach(other=>{
+    const shouldExclude=other.dataset.categorySolo!==selected;
+    if(soloExcluded.has(other.dataset.categorySolo)!==shouldExclude)other.click();
+   });
+  };
+  btn.addEventListener('click',apply);btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){apply(e)}});
+  tile.append(btn);
+ });
+}
+addOnlyControls();
 $('#cuisines').innerHTML=categories.map(([emoji,label,id])=>`<button class="food" data-category="${id}"><span>${emoji}</span>${label}</button>`).join('');
 $('#cuisines2').innerHTML=categories.map(([emoji,label,id])=>`<button class="food" data-category2="${id}"><span>${emoji}</span>${label}</button>`).join('');
 $$('[data-category2]').forEach(b=>b.addEventListener('click',()=>{const c=b.dataset.category2;excluded2.has(c)?excluded2.delete(c):excluded2.add(c);b.classList.toggle('excluded',excluded2.has(c))}));
@@ -77,7 +95,21 @@ $('#chemistry-find').addEventListener('click',search);
 $('#chemistry-back1').addEventListener('click',()=>show('chemistry-player1'));
 $('#locate').addEventListener('click',()=>{if(!navigator.geolocation){alert('Location is not supported on this device.');return}navigator.geolocation.getCurrentPosition(p=>{geo={lat:p.coords.latitude,lon:p.coords.longitude,label:'Your location'};$('#zip').value='';alert('Location ready!')},()=>alert('Location permission was unavailable. You can enter a ZIP code instead.'),{timeout:12000})});
 function haversine(a,b,c,d){const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,z=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z))}
-function cuisineFor(tags){const raw=[tags.cuisine||'',tags.name||'',tags['name:en']||'',tags.amenity||''].join(' ').toLowerCase();if(tags.amenity==='fast_food')return 'fast_food';for(const [,,id] of categories){const words={burger:['burger','hamburger'],mexican:['mexican','taco','burrito'],chicken:['chicken','wings'],steak:['steak','steakhouse'],sandwich:['sandwich','sub'],salad:['salad','healthy'],breakfast:['breakfast','brunch','pancake'],seafood:['seafood','fish'],sushi:['sushi','japanese'],chinese:['chinese'],pizza:['pizza'],italian:['italian','pasta'],indian:['indian'],thai:['thai']}[id]||[];if(words.some(w=>raw.includes(w)))return id}return 'other'}
+function cuisineFor(tags){
+ const name=String(tags.name||tags['name:en']||'').toLowerCase();
+ const cuisine=String(tags.cuisine||'').toLowerCase();
+ const amenity=String(tags.amenity||'').toLowerCase();
+ const shop=String(tags.shop||'').toLowerCase();
+ const has=(s,terms)=>terms.some(t=>new RegExp('\\b'+t+'\\b','i').test(s));
+ // Prefer explicit cuisine tags and unmistakable business names over broad guesses.
+ if(has(name,['starbucks','dunkin','coffee','espresso','cafe','café'])||amenity==='cafe'&& !has(cuisine,['mexican','italian','thai','chinese','indian']))return 'coffee';
+ if(has(name,['donut','donuts','doughnut','bakery','ice cream','gelato'])||shop==='bakery'||shop==='pastry')return 'dessert';
+ const mapping=[['mexican',['mexican','taco','tacos','burrito','burritos','taqueria','tex.mex']],['burger',['burger','burgers','hamburger','hamburgers']],['pizza',['pizza','pizzeria']],['chicken',['chicken','wings']],['sushi',['sushi','japanese']],['chinese',['chinese']],['thai',['thai']],['indian',['indian','curry']],['italian',['italian','pasta','trattoria']],['steak',['steak','steakhouse']],['sandwich',['sandwich','sandwiches','sub','subs']],['salad',['salad','salads','healthy']],['breakfast',['breakfast','brunch','pancake','pancakes']],['seafood',['seafood','fish']]];
+ for(const [id,words] of mapping)if(has(cuisine,words))return id;
+ for(const [id,words] of mapping)if(has(name,words))return id;
+ if(amenity==='fast_food')return 'fast_food';
+ return 'other';
+}
 function priceInfo(tags){
  const raw=String(tags['price:range']||tags['price_range']||tags['price']||tags['charge']||'').trim();
  if(!raw)return {level:0,label:'Price not listed'};

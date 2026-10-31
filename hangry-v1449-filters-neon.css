@@ -1,0 +1,36 @@
+/* v1.4.49: unified wallpaper and explicit single-cuisine controls */
+/* The neon wallpaper is ALWAYS behind the full results view; no image becomes a card. */
+#all.screen.active,#wheel-screen.screen.active,#winner.screen.active{
+ position:relative!important;isolation:isolate!important;background:transparent!important;
+}
+#all.screen.active::before,#wheel-screen.screen.active::before,#winner.screen.active::before{
+ content:""!important;position:absolute!important;inset:0!important;left:50%!important;
+ width:100vw!important;transform:translateX(-50%)!important;z-index:-2!important;
+ background-color:#05162d!important;
+ background-image:linear-gradient(to bottom,rgba(3,15,35,.72) 0%,rgba(3,15,35,.67) 220px,rgba(3,15,35,.48) 620px,rgba(3,15,35,.56) 100%),url("hangry-neon-wallpaper-v1444.webp")!important;
+ background-repeat:no-repeat,repeat-y!important;
+ background-size:100% 100%,100% auto!important;
+ background-position:center top,center top!important;
+}
+/* Casino hero is a separate top layer, masked to fade into a navy buffer. */
+#wheel-screen.screen.active::after,#winner.screen.active::after{
+ content:""!important;pointer-events:none!important;position:absolute!important;
+ top:0!important;bottom:auto!important;left:50%!important;right:auto!important;
+ width:100vw!important;height:clamp(540px,55vw,880px)!important;
+ transform:translateX(-50%)!important;z-index:-1!important;
+ background:linear-gradient(to bottom,rgba(3,15,35,.04) 0%,rgba(3,15,35,.08) 45%,#06162d 90%,transparent 100%),url("hangry-casino-wheel-v1442.webp") center top/cover no-repeat!important;
+ -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 52%,rgba(0,0,0,.92) 65%,transparent 100%)!important;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 52%,rgba(0,0,0,.92) 65%,transparent 100%)!important;
+}
+/* Don't let any image accidentally occupy the entire results viewport. */
+#all #all-list{display:flex!important;flex-direction:column!important;gap:14px!important;max-width:1200px!important;margin:22px auto!important}
+#all #all-list .result-card{display:flex!important;align-items:flex-start!important;gap:16px!important;min-height:0!important;padding:16px!important;background:rgba(3,20,43,.94)!important;border:1px solid #1c769c!important;border-radius:17px!important;overflow:hidden!important}
+#all #all-list .result-art{flex:0 0 86px!important;width:86px!important;height:86px!important;min-width:86px!important;min-height:86px!important;max-height:86px!important;overflow:hidden!important;display:grid!important;place-items:center!important}
+#all #all-list .result-art img,#all #all-list .result-cuisine-icon{width:76px!important;height:76px!important;max-width:76px!important;max-height:76px!important;object-fit:contain!important}
+#all .lab-cuisine-filters{scrollbar-width:none!important}
+#all .lab-cuisine-filters::-webkit-scrollbar{display:none!important}
+#cuisinesSolo [data-category-solo]{position:relative;padding-right:74px!important}
+#cuisinesSolo .only-cuisine{position:absolute;right:9px;top:50%;transform:translateY(-50%);padding:7px 9px;border:1px solid #22caff;border-radius:8px;background:#0b3352;color:#e8faff;font:800 11px system-ui;letter-spacing:.05em;cursor:pointer;z-index:2}
+#cuisinesSolo .only-cuisine:hover,#cuisinesSolo .only-cuisine:focus{background:#ff8b28;color:#071629;border-color:#ffb459}
+#cuisinesSolo [data-category-solo].excluded .only-cuisine{opacity:1}
+@media(max-width:700px){#all #all-list .result-art{flex-basis:64px!important;width:64px!important;height:64px!important;min-width:64px!important;min-height:64px!important}#all #all-list .result-art img,#all #all-list .result-cuisine-icon{width:58px!important;height:58px!important}#wheel-screen.screen.active::after,#winner.screen.active::after{height:600px!important;background-position:35% top!important}}
