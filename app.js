@@ -4,7 +4,17 @@ const chainFries=['mcdonald','burger king','wendy','five guys','chick-fil-a','ch
 let mode='spin',excluded=new Set(),excluded2=new Set(),soloExcluded=new Set(),restaurants=[],rotation=0,spinning=false,winner=null,geo=null;
 const favorites=()=>JSON.parse(localStorage.getItem('dinnerRouletteFavorites')||'[]');
 const saveFavorites=a=>localStorage.setItem('dinnerRouletteFavorites',JSON.stringify(a));
-const show=id=>{ document.body.dataset.hangryMode=mode;  if(id==='home')return resetToHome(); if(id==='all'){const f=document.querySelectorAll('#all .lab-cuisine');f.forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));const sort=document.getElementById('lab-results-sort');if(sort){sort.value='match';sort.dispatchEvent(new Event('change',{bubbles:true}));}document.querySelector('#all .lab-cuisine[data-filter="all"]')?.click();} $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));window.scrollTo({top:0,behavior:'instant'});if(id==='saved')renderSaved();};
+const show=id=>{
+ if(id==='home')return resetToHome();
+ if(spinning&&id!=='wheel-screen'){spinGeneration++;spinning=false;}
+ if(id!=='loading' && $('#loading').classList.contains('active')){searchGeneration++;stopActiveRequests();}
+ document.body.dataset.hangryMode=mode;
+ $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));
+ if(id==='all')window.hangryRenderResults?.(true);
+ window.scrollTo({top:0,behavior:'instant'});
+ if(id==='saved')renderSaved();
+ document.dispatchEvent(new CustomEvent('hangry:screen',{detail:{id}}));
+};
 // Each experiment begins with clean choices. Restaurant search cache is shared,
 // but wheel exclusions and each person's preferences are never carried across modes.
 function clearChips(id){$$('#'+id+' .chip').forEach((b,i)=>b.classList.toggle('selected',i===0))}
@@ -15,7 +25,9 @@ function resetExperiment(){
  $$('[data-category], [data-category2], [data-category-solo]').forEach(b=>b.classList.remove('excluded'));
  ['service','solo-fries','solo-vibe','fries','vibe','fries2','vibe2'].forEach(clearChips);
  restaurants=[];wheelItems=[];wheelTargetSize=8;rejected.clear();locked.clear();rejectionHistory=[];
- winner=null;rotation=0;spinning=false;
+ winner=null;rotation=0;spinning=false;spinGeneration++;
+ const manual=document.getElementById('manual-restaurant-name');if(manual)manual.value='';
+ const manualStatus=document.getElementById('manual-contender-status');if(manualStatus)manualStatus.textContent='Manual choices are unverified. Directions searches by name and your experiment ZIP.';
  document.querySelector('#all .lab-cuisine[data-filter="all"]')?.click();
  $('#spin').disabled=false;
  $('#all-list').innerHTML='';$('#contenders').innerHTML='';
@@ -31,12 +43,14 @@ function resetExperiment(){
 function resetToHome(){
  mode='spin';
  window.hangryExperimentActive=false;
+ document.body.dataset.hangryMode=mode;
  document.body.classList.remove('hunger-experiment-active');
  delete document.body.dataset.hungerLevel;
  resetExperiment();
  const slider=document.getElementById('hangry-range');
  if(slider){slider.value='3';slider.dispatchEvent(new Event('input',{bubbles:true}));}
  try{localStorage.removeItem('hangryologyLevel');localStorage.removeItem('hangryologyExperimentZip')}catch(e){}
+ geo=null;
  const zip=document.getElementById('zip');if(zip)zip.value='';
  const experimentZip=document.getElementById('hunger-zip');if(experimentZip)experimentZip.value='';
  const radius=document.getElementById('radius');if(radius)radius.value='10';
@@ -45,6 +59,7 @@ function resetToHome(){
 }
 function enterMode(next){
  window.hangryExperimentActive=false;
+ document.body.dataset.hangryMode=mode;
  document.body.classList.remove('hunger-experiment-active');
  delete document.body.dataset.hungerLevel;
  mode=next;resetExperiment();show('setup')
@@ -55,8 +70,9 @@ $$('[data-go]').forEach(b=>b.addEventListener('click',()=>{
  else show(b.dataset.go);
  $('#mobile-menu').classList.remove('open');
 }));
-$$('[data-mode]').forEach(b=>b.addEventListener('click',()=>enterMode(b.dataset.mode)));
-$('#reset-experiment').addEventListener('click',()=>{if(confirm('Reset the experiment and return to Mission Control? Your saved favorites will stay.'))resetToHome()});
+$$('[data-mode]:not([data-go])').forEach(b=>b.addEventListener('click',()=>enterMode(b.dataset.mode)));
+$('#reset-experiment').addEventListener('click',resetToHome);
+$$('.hangry-reset-everywhere').forEach(b=>b.addEventListener('click',resetToHome));
 $('#reset-from-results').addEventListener('click',resetToHome);
 $('#cuisinesSolo').innerHTML=categories.map(([emoji,label,id])=>`<button class="food" data-category-solo="${id}"><span>${emoji}</span>${label}</button>`).join('');
 $$('[data-category-solo]').forEach(b=>b.addEventListener('click',()=>{const c=b.dataset.categorySolo;soloExcluded.has(c)?soloExcluded.delete(c):soloExcluded.add(c);b.classList.toggle('excluded',soloExcluded.has(c))}));
@@ -123,7 +139,7 @@ function address(t){return [t['addr:housenumber'],t['addr:street'],t['addr:city'
 const SEARCH_CACHE_KEY='hangryology_search_cache_v130';
 let searchGeneration=0;
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-function cacheRead(key){try{const obj=JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY)||'{}');return obj[key]?.elements?.length?obj[key]:null}catch{return null}}
+function cacheRead(key){try{const obj=JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY)||'{}'),entry=obj[key];return Array.isArray(entry?.elements)&&Date.now()-entry.saved<30*60*1000?entry:null}catch{return null}}
 function cacheWrite(key,elements){try{let obj=JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY)||'{}');obj[key]={saved:Date.now(),elements};const keys=Object.keys(obj).sort((a,b)=>obj[b].saved-obj[a].saved).slice(0,8);obj=Object.fromEntries(keys.map(k=>[k,obj[k]]));localStorage.setItem(SEARCH_CACHE_KEY,JSON.stringify(obj))}catch(e){console.warn('Restaurant cache unavailable:',e)}}
 function progress(message){const el=$('#loading-text');if(el)el.textContent=message;document.dispatchEvent(new CustomEvent('hangry:search-progress',{detail:{message}}))}
 function getRestaurantsFromData(data,point,miles){
@@ -193,8 +209,8 @@ function presentResults(data,point,miles){
   const level=Number($('#hangry-range').value)||3;
   const score=r=>{
    const type=String(r.type||'').toLowerCase(),amenity=String(r.tags?.amenity||'');
-   const light=['cafe','salad','breakfast','sandwich','other'].includes(type);
-   const snack=['sandwich','pizza','mexican','burger','cafe','fast_food'].includes(type)||amenity==='cafe';
+   const light=['coffee','cafe','dessert','salad','breakfast','sandwich'].includes(type);
+   const snack=['sandwich','pizza','mexican','burger','coffee','cafe','dessert','fast_food'].includes(type)||amenity==='cafe';
    const substantial=amenity==='restaurant'||['burger','mexican','italian','chinese','thai','indian','steak','sushi'].includes(type);
    const quick=amenity==='fast_food'||['burger','pizza','sandwich','chicken','fast_food'].includes(type);
    const match=[light,snack,substantial,quick,quick][level-1];
@@ -209,7 +225,7 @@ function presentResults(data,point,miles){
    if(fast.length)restaurants=fast;
   }
  }
- if(!restaurants.length){show('search-error');$('#error-message').textContent='The search returned restaurants, but none matched your current filters. Try fewer exclusions or a different preference.';return}
+ if(!restaurants.length){showSearchError('No matching restaurants', 'Restaurants were checked, but none matched these preferences and listed hours. Try fewer exclusions, a different preference, or a larger radius.', false);return}
  rejected.clear();locked.clear();rejectionHistory=[];prepareWheel();if(mode==='date')showChemistryResults();else show(['browse','quiz'].includes(mode)?'all':'wheel-screen');
 }
 function showChemistryResults(){
@@ -230,6 +246,8 @@ $('#back-from-all').addEventListener('click',()=>{if(window.hangryExperimentActi
 let activeSearchControllers=[];
 function stopActiveRequests(){activeSearchControllers.forEach(c=>c.abort());activeSearchControllers=[];}
 async function search(){
+ const conflicts=chemistryConflicts();
+ if(conflicts.length){$('#chemistry-conflict-message').textContent=conflicts.join(' ');show('chemistry-conflict');return;}
  const generation=++searchGeneration;
  stopActiveRequests();
  show('loading');document.dispatchEvent(new Event('hangry:search-start'));progress('Finding real restaurants near your location…');
@@ -239,12 +257,13 @@ async function search(){
    const zip=$('#zip').value.trim();
    if(!/^\d{5}$/.test(zip))throw Error('Please enter a valid five-digit ZIP code.');
    document.dispatchEvent(new CustomEvent('hangry:search-stage',{detail:{stage:'location'}}));
-   const res=await fetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`);
+   const locationController=new AbortController();activeSearchControllers=[locationController];
+   const res=await fetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`,{signal:locationController.signal});
    if(!res.ok)throw Error('ZIP code not found. Please check the ZIP and try again.');
    const data=await res.json();point={lat:+data.places[0].latitude,lon:+data.places[0].longitude,label:`${data.places[0]['place name']}, ${data.places[0]['state abbreviation']}`};
   }
   if(!point)throw Error('Enter a ZIP code or share your location.');
- }catch(e){if(generation===searchGeneration){show('search-error');$('#error-message').textContent=e.message||'Could not look up this location.'}return}
+ }catch(e){if(generation===searchGeneration)showSearchError('Check your location',e.message||'Could not look up this location.',false);return}
  if(generation!==searchGeneration)return;
  const miles=+$('#radius').value,meters=Math.round(miles*1609.344);
  const key=`${point.lat.toFixed(4)}:${point.lon.toFixed(4)}:${meters}`;
@@ -257,12 +276,13 @@ async function search(){
  const controllers=endpoints.map(()=>new AbortController());
  activeSearchControllers=controllers;
  let settled=false;
- const attempts=[0,0];
+ const attempts=endpoints.map(()=>0);
  const delays=[0,20000];
  const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
  function status(){
   if(generation!==searchGeneration||settled)return;
-  progress(`Searching within ${miles} miles of ${point.label}… Server attempts: ${attempts.join(' / ')}. Slow requests remain active; you can cancel below.`);
+  const active=attempts.filter(n=>n>0).length;
+  progress(`Searching within ${miles} miles of ${point.label}… ${active} of ${endpoints.length} servers contacted; ${attempts.reduce((a,b)=>a+b,0)} requests started. Slow requests remain active; you can cancel below.`);
  }
  // Each server retries only after its own request fails. A slow pending request
  // is never interrupted by a timer or by the other server retrying.
@@ -304,6 +324,7 @@ window.hangryLaunchExperiment=function(zip,level){
  const meter=document.getElementById('hangry-range');
  const radius=document.getElementById('radius');
  if(!setupZip||!meter||!radius)return {ok:false,message:'Search controls are missing. Refresh the page.'};
+ mode='browse';resetExperiment();
  setupZip.value=z;
  meter.value=String(n);
  meter.dispatchEvent(new Event('input',{bubbles:true}));
@@ -319,13 +340,13 @@ window.hangryLaunchExperiment=function(zip,level){
 const cancelSearch=()=>{searchGeneration++;stopActiveRequests();show('setup')};
 $('#cancel-search')?.addEventListener('click',cancelSearch);
 
-let wheelItems=[];let wheelTargetSize=8;const rejected=new Set(),locked=new Set();let rejectionHistory=[];
+let spinGeneration=0;let wheelItems=[];let wheelTargetSize=8;const rejected=new Set(),locked=new Set();let rejectionHistory=[];
 const colors=['#e65a31','#144e73','#c23750','#f0a53a','#147e79','#754bb5','#c64a27','#2e6090'];
 const eligible=()=>restaurants.filter(r=>!rejected.has(r.id));
-function updateWheelStatus(){const n=eligible().length;$('#match-title').textContent=`${n} restaurants in the running!`;$('#match-note').textContent=`${wheelItems.length} on the wheel • ${restaurants.length} total matches • ${rejected.size} rejected`;$('#all-count').textContent=String(restaurants.length);$('#wheel-status').textContent=`🔒 ${locked.size} locked · 🚫 ${rejected.size} rejected · ${n} eligible. No new restaurant search needed.`;$('#spin').disabled=spinning||!wheelItems.length;$('#wheel-undo').classList.toggle('hidden',!rejectionHistory.length);}
+function updateWheelStatus(){const n=eligible().length;$('#match-title').textContent=`${n} restaurants in the running!`;$('#match-note').textContent=`${wheelItems.length} on the wheel • ${restaurants.length} total matches • ${rejected.size} rejected`;$('#all-count').textContent=String(restaurants.length);$('#wheel-status').textContent=`🔒 ${locked.size} locked · 🚫 ${rejected.size} rejected · ${n} eligible. No new restaurant search needed.`;$('#spin').disabled=spinning||!wheelItems.length;$$('#wheel-screen .wheel-tools button,#contenders button,#manual-contender-form button,#manual-contender-form input').forEach(b=>b.disabled=spinning);$('#wheel-undo').classList.toggle('hidden',!rejectionHistory.length);}
 function shuffleWheel(){const keep=wheelItems.filter(r=>locked.has(r.id)&&!rejected.has(r.id)).slice(0,8);const pool=eligible().filter(r=>!keep.some(k=>k.id===r.id));for(let i=pool.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1));[pool[i],pool[k]]=[pool[k],pool[i]];}wheelItems=[...keep,...pool.slice(0,Math.max(0,wheelTargetSize-keep.length))];rotation=0;drawWheel();renderContenders();updateWheelStatus();}
 function prepareWheel(){wheelTargetSize=8;shuffleWheel();renderPlaces('#all-list',restaurants)}
-function renderContenders(){const el=$('#contenders');el.innerHTML=wheelItems.map(r=>`<div class="contender-row"><div><strong>${escapeHtml(r.name)}</strong><small>📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</small>${openingStatus(r.tags).state==='unknown'?'<small class="hours-unconfirmed">Hours unconfirmed — verify before visiting</small>':'<small class="hours-open">Listed as open now</small>'}</div><div class="contender-actions"><button class="result-btn lock-choice" data-id="${escapeHtml(r.id)}" aria-label="${locked.has(r.id)?'Unlock':'Lock'} ${escapeHtml(r.name)}">${locked.has(r.id)?'🔒 Locked':'🔓 Lock'}</button><button class="result-btn remove-choice" data-id="${escapeHtml(r.id)}" aria-label="Remove ${escapeHtml(r.name)}">✕ Remove</button></div></div>`).join('')||'<p class="muted">No contenders left. Reset rejected restaurants to try again.</p>';
+function renderContenders(){const el=$('#contenders');el.innerHTML=wheelItems.map(r=>`<div class="contender-row"><div><strong>${escapeHtml(r.name)}</strong><small>📍 ${r.manual?'Distance unverified':r.miles.toFixed(1)+' mi'} · ${escapeHtml(r.type.replace('_',' '))}</small><a class="contender-map" href="${escapeHtml(mapUrl(r))}" target="_blank" rel="noopener noreferrer">📍 Directions</a>${openingStatus(r.tags).state==='unknown'?'<small class="hours-unconfirmed">Hours unconfirmed — verify before visiting</small>':'<small class="hours-open">Listed as open now</small>'}</div><div class="contender-actions"><button class="result-btn lock-choice" data-id="${escapeHtml(r.id)}" aria-label="${locked.has(r.id)?'Unlock':'Lock'} ${escapeHtml(r.name)}">${locked.has(r.id)?'🔒 Locked':'🔓 Lock'}</button><button class="result-btn remove-choice" data-id="${escapeHtml(r.id)}" aria-label="Remove ${escapeHtml(r.name)}">✕ Remove</button></div></div>`).join('')||`<p class="muted">${eligible().length?'Your wheel is empty. Use Refill wheel to 8, or add a restaurant from all matches.':'Every restaurant has been rejected. Reset rejects to restore your choices.'}</p>`;
 el.querySelectorAll('.lock-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.has(id)?locked.delete(id):locked.add(id);renderContenders();updateWheelStatus()}));
 el.querySelectorAll('.remove-choice').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id;locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);wheelTargetSize=wheelItems.length;rotation=0;drawWheel();renderContenders();updateWheelStatus()}));}
 // v1.4.40: neon laboratory wheel; wheel selection and physics stay unchanged.
@@ -333,7 +354,7 @@ const labWheelIcons={american:'burger',burger:'burger',fast_food:'burger',pizza:
 const labIconCache={};
 function labWheelIcon(type){
  const k=labWheelIcons[String(type||'').toLowerCase()]||'other';
- if(!labIconCache[k]){const img=new Image();labIconCache[k]=img;img.onload=()=>{if(!spinning)drawWheel()};img.src=`cuisine-${({burger:'burger',pizza:'pizza',mexican:'mexican',asian:'chinese',sushi:'sushi',seafood:'seafood',steak:'steak',chicken:'chicken',sandwich:'sandwich',breakfast:'breakfast',coffee:'coffee',dessert:'dessert',healthy:'salad',indian:'indian',other:'other'})[k]||k}-v1441.png`}
+ if(!labIconCache[k]){const img=new Image();labIconCache[k]=img;img.onload=()=>{if(!spinning)drawWheel()};img.src=cuisineIcon(k)}
  return labIconCache[k];
 }
 function drawWheel(){
@@ -375,17 +396,34 @@ function drawWheel(){
  ctx.beginPath();ctx.arc(0,0,r-15,0,2*Math.PI);ctx.strokeStyle='rgba(76,216,255,.55)';ctx.lineWidth=3;ctx.shadowBlur=5;ctx.stroke();
  ctx.restore();
 }
-$('#spin').addEventListener('click',()=>{if(spinning||!wheelItems.length)return;spinning=true;$('#spin').disabled=true;const start=rotation,delta=(Math.PI*2)*(5+Math.random()*3),duration=4700,t0=performance.now();function frame(now){const t=Math.min(1,(now-t0)/duration),ease=1-Math.pow(1-t,4);rotation=start+delta*ease;drawWheel();if(t<1)requestAnimationFrame(frame);else{spinning=false;$('#spin').disabled=false;const n=wheelItems.length,step=2*Math.PI/n,angle=(((-rotation)% (2*Math.PI))+(2*Math.PI))%(2*Math.PI);winner=wheelItems[Math.floor(angle/step)%n];renderWinner();show('winner')}}requestAnimationFrame(frame)});
+function spinWheel(){
+ if(spinning||!wheelItems.length)return;
+ const generation=++spinGeneration,candidates=[...wheelItems];
+ spinning=true;updateWheelStatus();
+ const start=rotation,delta=(Math.PI*2)*(5+Math.random()*3);
+ const duration=matchMedia('(prefers-reduced-motion: reduce)').matches?200:4700,t0=performance.now();
+ function frame(now){
+  if(generation!==spinGeneration)return;
+  const t=Math.min(1,(now-t0)/duration),ease=1-Math.pow(1-t,4);
+  rotation=start+delta*ease;drawWheel();
+  if(t<1)requestAnimationFrame(frame);
+  else{spinning=false;const step=2*Math.PI/candidates.length,angle=((-rotation%(2*Math.PI))+2*Math.PI)%(2*Math.PI);winner=candidates[Math.floor(angle/step)%candidates.length];updateWheelStatus();renderWinner();show('winner');}
+ }
+ requestAnimationFrame(frame);
+}
+$('#spin').addEventListener('click',spinWheel);
 function safeWebsite(r){const raw=r.tags.website||r.tags['contact:website']||r.tags['website:menu']||'';try{const u=new URL(raw);return ['https:','http:'].includes(u.protocol)?u.href:null}catch{return null}}
-function mapUrl(r){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+r.lat+','+r.lon)}`}
-function renderWinner(){if(!winner)return;$('#winner-name').textContent=winner.name;$('#winner-info').textContent=`📍 ${winner.miles.toFixed(1)} miles away · ${winner.type.replace('_',' ')}`;$('#winner-address').textContent=winner.address;$('#directions').href=mapUrl(winner);$('#favorite').textContent=favorites().some(x=>x.id===winner.id)?'♥ Saved':'♡ Save';
-const tags=winner.tags||{};const website=safeWebsite(winner);const menu=$('#winner-menu');menu.href=website||`https://www.google.com/search?q=${encodeURIComponent(winner.name+' menu '+winner.address)}`;menu.textContent=website?'🌐 Restaurant Website / Menu':'🔎 Find Menu Online';const phone=tags.phone||tags['contact:phone'];const call=$('#winner-call');call.classList.toggle('hidden',!phone);if(phone)call.href=`tel:${phone.replace(/[^+0-9]/g,'')}`;
-const details=[['🍽️ Cuisine',tags.cuisine||winner.type.replace('_',' ')],['Listed hours',tags.opening_hours||'Not available — confirm with restaurant'],['🥡 Takeout',tags.takeaway==='yes'?'Listed as available':tags.takeaway==='no'?'Listed as unavailable':'Not verified'],['🚗 Delivery',tags.delivery==='yes'?'Listed as available':tags.delivery==='no'?'Listed as unavailable':'Not verified'],['📞 Phone',phone||'Not listed'],['💵 Price',priceInfo(tags).label]];$('#winner-details').innerHTML=details.map(([label,val])=>`<div><small>${escapeHtml(label)}</small><strong>${escapeHtml(val)}</strong></div>`).join('');$('#undo-reject').classList.toggle('hidden',rejectionHistory.length===0);}
+function mapUrl(r){const where=Number.isFinite(r.lat)&&Number.isFinite(r.lon)?r.lat+','+r.lon:($('#zip').value.trim()||'');return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+where)}`}
+function menuUrl(r){return safeWebsite(r)||'https://www.google.com/search?q='+encodeURIComponent(r.name+' menu '+(r.tags?.['addr:city']||$('#zip').value.trim()||''));}
+function cuisineIcon(type){const key=({asian:'chinese',healthy:'salad',italian:'pizza',fast_food:'burger',cafe:'coffee',bakery:'dessert',ice_cream:'dessert',american:'burger'})[type]||type||'other';return `cuisine-${key}-${['coffee','dessert'].includes(key)?'v1439.svg':'v1441.png'}`;}
+function renderWinner(){if(!winner)return;$('#winner-name').textContent=winner.name;$('#winner-info').textContent=`📍 ${winner.manual?'Manually added · distance unverified':winner.miles.toFixed(1)+' miles away'} · ${winner.type.replace('_',' ')}`;$('#winner-address').textContent=winner.address;$('#directions').href=mapUrl(winner);$('#favorite').textContent=favorites().some(x=>x.id===winner.id)?'♥ Saved':'♡ Save';
+const tags=winner.tags||{};const website=safeWebsite(winner);const menu=$('#winner-menu');menu.href=menuUrl(winner);menu.textContent=website?'🌐 Restaurant Website / Menu':'🔎 Find Menu Online';const phone=tags.phone||tags['contact:phone'];const call=$('#winner-call');call.classList.toggle('hidden',!phone);if(phone)call.href=`tel:${phone.replace(/[^+0-9]/g,'')}`;
+const details=[['🍽️ Cuisine',tags.cuisine||winner.type.replace('_',' ')],['Listed hours',tags.opening_hours||'Not available — confirm with restaurant'],['🥡 Takeout',tags.takeaway==='yes'?'Listed as available':tags.takeaway==='no'?'Listed as unavailable':'Not verified'],['🚗 Delivery',tags.delivery==='yes'?'Listed as available':tags.delivery==='no'?'Listed as unavailable':'Not verified'],['📞 Phone',phone||'Not listed'],['💵 Price',priceInfo(tags).label]];$('#winner-details').innerHTML=details.map(([label,val])=>`<div><small>${escapeHtml(label)}</small><strong>${escapeHtml(val)}</strong></div>`).join('');$('#undo-reject').classList.toggle('hidden',rejectionHistory.length===0);document.dispatchEvent(new CustomEvent('hangry:winner',{detail:{restaurant:winner}}));}
 $('#favorite').addEventListener('click',()=>{let a=favorites();a.some(x=>x.id===winner.id)?a=a.filter(x=>x.id!==winner.id):a.push(winner);saveFavorites(a);renderWinner()});
-$('#again').addEventListener('click',()=>{show('wheel-screen');rotation=0;drawWheel()});$('#other').addEventListener('click',()=>show('all'));$('#view-matches').addEventListener('click',()=>show('all'));$('#reshuffle').addEventListener('click',shuffleWheel);
-$('#reject-winner').addEventListener('click',()=>{if(!winner)return;const id=winner.id;rejected.add(id);rejectionHistory.push(id);locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);const replacement=eligible().find(r=>!wheelItems.some(w=>w.id===r.id));if(replacement)wheelItems.push(replacement);if(!wheelItems.length){show('wheel-screen');renderContenders();updateWheelStatus();alert('🐶 Bunsen says: You rejected everything! Reset rejects to start again.');return}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen');});
+$('#again').addEventListener('click',()=>{show('wheel-screen');rotation=0;drawWheel();spinWheel()});$('#other').addEventListener('click',()=>show('all'));$('#view-matches').addEventListener('click',()=>show('all'));$('#reshuffle').addEventListener('click',shuffleWheel);
+$('#reject-winner').addEventListener('click',()=>{if(!winner)return;const id=winner.id;rejected.add(id);rejectionHistory.push(id);locked.delete(id);wheelItems=wheelItems.filter(r=>r.id!==id);const replacement=eligible().find(r=>!wheelItems.some(w=>w.id===r.id));if(replacement)wheelItems.push(replacement);if(!wheelItems.length){show('wheel-screen');renderContenders();updateWheelStatus();alert('🐶 Bunsen says: You rejected everything! Reset rejects to start again.');return}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen');spinWheel();});
 $('#wheel-undo').addEventListener('click',()=>$('#undo-reject').click());
-$('#undo-reject').addEventListener('click',()=>{const id=rejectionHistory.pop();if(!id)return;rejected.delete(id);const r=restaurants.find(x=>x.id===id);if(r&&!wheelItems.some(x=>x.id===id)){if(wheelItems.length>=8){const idx=wheelItems.findIndex(x=>!locked.has(x.id));if(idx>=0)wheelItems.splice(idx,1);}if(wheelItems.length<8)wheelItems.push(r);}rotation=0;drawWheel();renderContenders();updateWheelStatus();$('#undo-reject').classList.toggle('hidden',!rejectionHistory.length);show('wheel-screen')});
+$('#undo-reject').addEventListener('click',()=>{const id=rejectionHistory.pop();if(!id)return;rejected.delete(id);const r=restaurants.find(x=>x.id===id);if(r&&!wheelItems.some(x=>x.id===id)){if(wheelItems.length>=8){const idx=wheelItems.findIndex(x=>!locked.has(x.id));if(idx>=0)wheelItems.splice(idx,1);}if(wheelItems.length<8)wheelItems.push(r);wheelTargetSize=wheelItems.length;}rotation=0;drawWheel();renderContenders();updateWheelStatus();$('#undo-reject').classList.toggle('hidden',!rejectionHistory.length);show('wheel-screen')});
 $('#reset-rejected').addEventListener('click',()=>{rejected.clear();rejectionHistory=[];shuffleWheel()});
 $('#reset-wheel').addEventListener('click',()=>{wheelTargetSize=8;shuffleWheel()});
 function renderPlaces(target,arr){$(target).innerHTML=arr.map(r=>{
@@ -394,7 +432,7 @@ const menu=r.tags.website||r.tags['contact:website']||'';
 const safeMenu=/^https?:\/\//i.test(menu)?menu:'';
 const price=priceInfo(r.tags);
 const emoji=({burger:'🍔',pizza:'🍕',mexican:'🌮',chicken:'🍗',italian:'🍝',chinese:'🥡',sushi:'🍣',steak:'🥩',sandwich:'🥪',salad:'🥗',indian:'🍛',thai:'🍜',breakfast:'🍳',fast_food:'🍟',seafood:'🦐',other:'🍽️'})[r.type]||'🍽️';
-return `<article class="result-card"><div class="result-art" aria-hidden="true"><img class="result-cuisine-icon" src="cuisine-${({burger:"burger",pizza:"pizza",mexican:"mexican",chicken:"chicken",italian:"pizza",chinese:"asian",sushi:"sushi",steak:"steak",sandwich:"sandwich",salad:"healthy",indian:"indian",thai:"asian",breakfast:"breakfast",fast_food:"burger",seafood:"seafood",cafe:"coffee",coffee:"coffee",bakery:"dessert",dessert:"dessert",ice_cream:"dessert",american:"burger",other:"other"})[r.type]||"other"}-v1441.png" alt="" loading="lazy"></div><div class="result-body"><strong>${escapeHtml(r.name)}</strong><span class="result-meta">📍 ${r.miles.toFixed(1)} mi · ${escapeHtml(r.type.replace('_',' '))}</span><span class="result-address">${escapeHtml(r.address)}</span><span class="result-price">💵 ${escapeHtml(price.label)}${price.level?" · Listed price information":" · Check menu for pricing"}</span><div class="result-actions"><a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query=${query}">📍 Directions</a>${safeMenu?`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="${escapeHtml(safeMenu)}">📖 Website / Menu</a>`:`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q=${encodeURIComponent(r.name+' menu near '+r.address)}">📖 Find Menu</a>`}<button class="result-btn add-wheel" data-wheel="${escapeHtml(r.id)}">🎡 Add to wheel</button></div></div></article>`}).join('')||'<p class="muted">No matches found.</p>';
+return `<article class="result-card"><div class="result-art" aria-hidden="true"><img class="result-cuisine-icon" src="${cuisineIcon(r.type)}" alt="" loading="lazy"></div><div class="result-body"><strong>${escapeHtml(r.name)}</strong><span class="result-meta">📍 ${r.manual?'Distance unverified':r.miles.toFixed(1)+' mi'} · ${escapeHtml(r.type.replace('_',' '))}</span><span class="result-address">${escapeHtml(r.address)}</span><span class="result-price">💵 ${escapeHtml(price.label)}${price.level?" · Listed price information":" · Check menu for pricing"}</span><div class="result-actions"><a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&query=${query}">📍 Directions</a>${safeMenu?`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="${escapeHtml(safeMenu)}">📖 Website / Menu</a>`:`<a class="result-btn" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q=${encodeURIComponent(r.name+' menu '+(r.tags?.['addr:city']||$('#zip').value.trim()||''))}">📖 Find Menu</a>`}<button class="result-btn add-wheel" data-wheel="${escapeHtml(r.id)}">🎡 Add to wheel</button></div></div></article>`}).join('')||'<p class="muted">No matches found.</p>';
 $$(`${target} .add-wheel`).forEach(b=>b.addEventListener('click',()=>{const r=restaurants.find(x=>x.id===b.dataset.wheel);if(!r)return;if(rejected.has(r.id)){rejected.delete(r.id);rejectionHistory=rejectionHistory.filter(x=>x!==r.id)}if(!wheelItems.some(x=>x.id===r.id)){if(wheelItems.length>=8){const i=wheelItems.findIndex(x=>!locked.has(x.id));if(i<0){alert("All eight contenders are locked. Unlock one to add another.");return}wheelItems.splice(i,1)}wheelItems.push(r);wheelTargetSize=wheelItems.length}rotation=0;drawWheel();renderContenders();updateWheelStatus();show('wheel-screen')}));}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function renderSaved(){const a=favorites();$('#saved-list').innerHTML=a.map(r=>`<div class="place"><div><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.address)}</small></div><button class="remove" data-id="${escapeHtml(r.id)}" title="Remove favorite">♥</button></div>`).join('')||'<div class="card"><p class="muted">No favorites yet. Spin the wheel and save a winner!</p></div>';$$('.remove').forEach(b=>b.addEventListener('click',()=>{saveFavorites(favorites().filter(x=>x.id!==b.dataset.id));renderSaved()}))}
@@ -404,3 +442,36 @@ $('#hangry-range').addEventListener('input',e=>{const i=+e.target.value-1;$('#ha
 $('#menu-toggle').addEventListener('click',()=>$('#mobile-menu').classList.toggle('open'));
 
 $('#retry-search').addEventListener('click',search);$('#back-to-setup').addEventListener('click',()=>show('setup'));
+
+function chemistryConflicts(){
+ if(mode!=='date')return [];
+ const conflicts=[];
+ const incompatible=(a,b)=>a!=='any'&&b!=='any'&&a!==b;
+ if(incompatible(chosen('fries'),chosen('fries2')))conflicts.push('One player requires fries while the other excludes them. Change one fries preference to “Doesn’t matter” to find shared choices.');
+ if(incompatible(chosen('vibe'),chosen('vibe2')))conflicts.push('One player wants quick and casual while the other requires sit-down dining. Change one dining preference to “Anything”.');
+ if(categories.every(c=>excluded.has(c[2])||excluded2.has(c[2])))conflicts.push('Between both players, every cuisine has been excluded. Allow at least one shared cuisine.');
+ return conflicts;
+}
+function showSearchError(title,message,serviceFailure=false){
+ $('#search-error h2:not(.hunger-title)').textContent=title;
+ $('#error-message').textContent=message;
+ $('#service-error-advice').hidden=!serviceFailure;
+ $('#retry-search').hidden=!serviceFailure;
+ show('search-error');
+}
+$('#manual-contender-form').addEventListener('submit',e=>{
+ e.preventDefault();if(spinning)return;
+ const input=$('#manual-restaurant-name'),name=input.value.trim();
+ const status=$('#manual-contender-status');
+ if(!name){status.textContent='Enter a restaurant name.';input.focus();return;}
+ if(wheelItems.length>=8&&wheelItems.every(r=>locked.has(r.id))){status.textContent='All eight contenders are locked. Unlock one before adding a restaurant.';return;}
+ let r=restaurants.find(r=>r.name.toLocaleLowerCase()===name.toLocaleLowerCase());
+ if(!r){r={id:'manual-'+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)),name,type:'other',lat:geo?.lat,lon:geo?.lon,miles:0,address:'Manually added — verify the location in Directions',tags:{},manual:true};restaurants.push(r);}
+ rejected.delete(r.id);rejectionHistory=rejectionHistory.filter(id=>id!==r.id);
+ if(!wheelItems.some(w=>w.id===r.id)){if(wheelItems.length>=8)wheelItems.splice(wheelItems.findIndex(w=>!locked.has(w.id)),1);wheelItems.push(r);}
+ wheelTargetSize=wheelItems.length;rotation=0;drawWheel();renderContenders();updateWheelStatus();input.value='';status.textContent=name+' added to your wheel. Location, hours and menu are unverified.';
+});
+
+// Keep the loading viewport matched to the actual responsive header height.
+const headerObserver=new ResizeObserver(entries=>{document.documentElement.style.setProperty('--hangry-header-height',entries[0].target.getBoundingClientRect().height+'px')});
+headerObserver.observe(document.querySelector('header.top'));

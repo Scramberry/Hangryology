@@ -23,31 +23,6 @@
  linear-gradient(0deg,#041329 0%,transparent 24%)!important;z-index:-1!important;
 }
 #home .home-hero.hero-lab-v1433 .hero-copy{position:relative!important;z-index:2!important}
-/* Native select popup is OS controlled; replace with a fully styled, keyboard-accessible menu */
-#all .lab-action-row .lab-sort-label{position:relative!important;overflow:visible!important;z-index:15!important}
-#all .lab-action-row .lab-sort-label #lab-results-sort{position:absolute!important;opacity:0!important;
- pointer-events:none!important;width:1px!important;height:1px!important;overflow:hidden!important}
-#all .lab-action-row .lab-sort-label .lab-sort-trigger{
- display:inline-flex;align-items:center;justify-content:space-between;gap:12px;
- flex:1;min-width:0;background:transparent;border:0;color:#fff;font:inherit;
- cursor:pointer;white-space:nowrap;padding:6px 4px
-}
-#all .lab-action-row .lab-sort-label .lab-sort-trigger:focus-visible{outline:2px solid #ffc16b;outline-offset:3px;border-radius:5px}
-#all .lab-action-row .lab-sort-label .lab-sort-menu{
- position:absolute;top:calc(100% + 7px);left:0;right:0;min-width:200px;
- padding:6px;background:#071b35!important;border:2px solid #ffad35!important;border-radius:13px;
- box-shadow:0 0 22px rgba(255,155,35,.45);z-index:500;display:flex;flex-direction:column;gap:4px;
-}
-#all .lab-action-row .lab-sort-label .lab-sort-menu[hidden]{display:none!important}
-#all .lab-action-row .lab-sort-label .lab-sort-option{
- color:#f5fbff!important;background:#0b2848!important;border:1px solid transparent!important;
- border-radius:9px!important;padding:12px 14px!important;text-align:left!important;
- font:inherit!important;cursor:pointer!important;white-space:nowrap!important
-}
-#all .lab-action-row .lab-sort-label .lab-sort-option:hover,
-#all .lab-action-row .lab-sort-label .lab-sort-option[aria-selected="true"]{
- background:#3d281a!important;border-color:#ffa32e!important;color:#ffd99a!important
-}
 @media(max-width:700px){
  #all .result-art{width:68px!important;min-width:68px!important;min-height:68px!important}
  #all .result-art img.result-cuisine-icon{width:64px!important;height:64px!important}
