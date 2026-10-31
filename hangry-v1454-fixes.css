@@ -1,0 +1,48 @@
+
+/* v1.4.54: Restore original per-level Hangry Meter hero, which v1452 hid. */
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::before {
+ content:""!important;display:block!important;
+ position:absolute!important;top:0!important;left:0!important;right:0!important;bottom:auto!important;
+ width:100%!important;height:clamp(430px,52vw,840px)!important;
+ z-index:-1!important;pointer-events:none!important;
+ background-image:linear-gradient(to bottom,rgba(1,9,22,.03) 0%,rgba(1,9,22,.02) 35%,rgba(2,12,29,.45) 58%,#031022 96%),var(--hangry-lab-banner)!important;
+ background-size:100% 100%,100% auto!important;background-position:center top,center top!important;
+ background-repeat:no-repeat!important;opacity:1!important;
+ -webkit-mask-image:none!important;mask-image:none!important;
+}
+/* Give the illustrated header room above the caption. */
+body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error){
+ padding-top:clamp(245px,26vw,440px)!important;
+}
+/* Stop the casino image from replacing the Hangry Meter's level-specific scene. */
+body.hunger-experiment-active #wheel-screen.active::after{
+ background:transparent!important;display:none!important;
+}
+/* Compact, square-ish cuisine choices with large art and text underneath. */
+#setup #cuisinesSolo,#chemistry-player1 #cuisines,#chemistry-player2 #cuisines2{
+ display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:12px!important;
+}
+#setup #cuisinesSolo .food,#chemistry-player1 #cuisines .food,#chemistry-player2 #cuisines2 .food{
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ gap:8px!important;min-width:0!important;min-height:134px!important;height:auto!important;
+ padding:12px 6px!important;text-align:center!important;line-height:1.25!important;
+}
+#setup #cuisinesSolo .food .cuisine-symbol,
+#chemistry-player1 #cuisines .food .cuisine-symbol,
+#chemistry-player2 #cuisines2 .food .cuisine-symbol{
+ display:block!important;width:clamp(72px,8vw,105px)!important;height:clamp(72px,8vw,105px)!important;
+ max-width:90%!important;object-fit:contain!important;margin:0 auto!important;
+}
+@media(max-width:800px){
+ #setup #cuisinesSolo,#chemistry-player1 #cuisines,#chemistry-player2 #cuisines2{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:520px){
+ #setup #cuisinesSolo,#chemistry-player1 #cuisines,#chemistry-player2 #cuisines2{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ #setup #cuisinesSolo .food,#chemistry-player1 #cuisines .food,#chemistry-player2 #cuisines2 .food{min-height:116px!important}
+ #setup #cuisinesSolo .food .cuisine-symbol,#chemistry-player1 #cuisines .food .cuisine-symbol,#chemistry-player2 #cuisines2 .food .cuisine-symbol{width:76px!important;height:76px!important}
+ body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error){padding-top:clamp(200px,62vw,310px)!important}
+ body.hunger-experiment-active .screen.active:is(#wheel-screen,#all,#winner,#search-error)::before{
+  height:clamp(380px,115vw,640px)!important;
+  background-size:100% 100%,auto clamp(310px,80vw,470px)!important;
+ }
+}
