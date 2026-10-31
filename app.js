@@ -4,7 +4,7 @@ const chainFries=['mcdonald','burger king','wendy','five guys','chick-fil-a','ch
 let mode='spin',excluded=new Set(),excluded2=new Set(),soloExcluded=new Set(),restaurants=[],rotation=0,spinning=false,winner=null,geo=null;
 const favorites=()=>JSON.parse(localStorage.getItem('dinnerRouletteFavorites')||'[]');
 const saveFavorites=a=>localStorage.setItem('dinnerRouletteFavorites',JSON.stringify(a));
-const show=id=>{ if(id==='home')return resetToHome(); if(id==='all'){const f=document.querySelectorAll('#all .lab-cuisine');f.forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));const sort=document.getElementById('lab-results-sort');if(sort){sort.value='match';sort.dispatchEvent(new Event('change',{bubbles:true}));}document.querySelector('#all .lab-cuisine[data-filter="all"]')?.click();} $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));window.scrollTo({top:0,behavior:'instant'});if(id==='saved')renderSaved();};
+const show=id=>{ document.body.dataset.hangryMode=mode;  if(id==='home')return resetToHome(); if(id==='all'){const f=document.querySelectorAll('#all .lab-cuisine');f.forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));const sort=document.getElementById('lab-results-sort');if(sort){sort.value='match';sort.dispatchEvent(new Event('change',{bubbles:true}));}document.querySelector('#all .lab-cuisine[data-filter="all"]')?.click();} $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));window.scrollTo({top:0,behavior:'instant'});if(id==='saved')renderSaved();};
 // Each experiment begins with clean choices. Restaurant search cache is shared,
 // but wheel exclusions and each person's preferences are never carried across modes.
 function clearChips(id){$$('#'+id+' .chip').forEach((b,i)=>b.classList.toggle('selected',i===0))}
@@ -273,10 +273,22 @@ function drawWheel(){
   ctx.save();ctx.rotate(mid);ctx.translate(r*.64,0);ctx.rotate(Math.PI/2);
   const icon=labWheelIcon(wheelItems[i].type);
   if(icon.complete&&icon.naturalWidth){ctx.shadowColor='#13d5ff';ctx.shadowBlur=12;ctx.drawImage(icon,-24,-62,48,48);ctx.shadowBlur=0}
-  ctx.font='700 18px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.shadowColor='#000';ctx.shadowBlur=7;
-  let name=wheelItems[i].name;
-  while(ctx.measureText(name).width>145&&name.length>5)name=name.slice(0,-2)+'…';
-  ctx.fillText(name,0,12);ctx.restore();
+  // Compact two-line labels: keep restaurant names inside their own wedges.
+  ctx.font='800 14px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='#fff';ctx.shadowColor='#00101d';ctx.shadowBlur=6;
+  const words=String(wheelItems[i].name||'Restaurant').trim().split(/\s+/);
+  const lines=[''];
+  for(const word of words){
+    const current=lines[lines.length-1];
+    if(current && ctx.measureText(current+' '+word).width>112 && lines.length<2)lines.push(word);
+    else lines[lines.length-1]=current?current+' '+word:word;
+  }
+  for(let j=0;j<lines.length;j++){
+    let label=lines[j];
+    while(ctx.measureText(label).width>114 && label.length>3)label=label.slice(0,-2)+'…';
+    ctx.fillText(label,0,4+j*17-(lines.length-1)*8.5);
+  }
+  ctx.restore();
  }
  ctx.beginPath();ctx.arc(0,0,r+3,0,2*Math.PI);ctx.strokeStyle='#05263d';ctx.lineWidth=18;ctx.shadowBlur=0;ctx.stroke();
  ctx.beginPath();ctx.arc(0,0,r+4,0,2*Math.PI);ctx.strokeStyle=ring;ctx.lineWidth=8;ctx.shadowColor=ring;ctx.shadowBlur=25;ctx.stroke();

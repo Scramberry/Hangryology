@@ -1,0 +1,37 @@
+/* v1.4.45 — top-page experiment scenes, fading into existing neon wallpaper.
+   Only spin setup and chemistry results are affected. Existing casino and hunger artwork is untouched. */
+#setup.screen.active:has(#chemistry-setup.hidden),
+#chemistry-results-screen.screen.active {position:relative!important;isolation:isolate!important;}
+/* The first-question hero is shown only in Spin the Wheel mode. */
+body[data-hangry-mode="spin"] #setup.screen.active,
+body[data-hangry-mode="date"] #chemistry-results-screen.screen.active {
+  padding-top:clamp(240px,34vw,490px)!important;
+}
+body[data-hangry-mode="spin"] #setup.screen.active::after,
+body[data-hangry-mode="date"] #chemistry-results-screen.screen.active::after {
+  content:"";pointer-events:none;position:absolute;z-index:-1;
+  top:0;left:50%;width:100vw;height:clamp(360px,47vw,690px);
+  transform:translateX(-50%);
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-position:center top;
+}
+body[data-hangry-mode="spin"] #setup.screen.active::after {
+  background-image:linear-gradient(to bottom,transparent 0%,rgba(3,14,32,0) 45%,rgba(3,14,32,.38) 67%,rgba(3,14,32,.78) 84%,transparent 100%),url("spin-questions-hero-v1445.webp");
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 65%,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 65%,transparent 100%);
+}
+body[data-hangry-mode="date"] #chemistry-results-screen.screen.active::after {
+  background-image:linear-gradient(to bottom,transparent 0%,rgba(3,14,32,0) 45%,rgba(3,14,32,.40) 70%,transparent 100%),url("chemistry-results-hero-v1445.webp");
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 65%,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 65%,transparent 100%);
+}
+/* The existing neon wallpaper stays under both heroes, spanning the whole page. */
+@media(max-width:700px){
+ body[data-hangry-mode="spin"] #setup.screen.active,
+ body[data-hangry-mode="date"] #chemistry-results-screen.screen.active{padding-top:280px!important}
+ body[data-hangry-mode="spin"] #setup.screen.active::after,
+ body[data-hangry-mode="date"] #chemistry-results-screen.screen.active::after{
+   height:400px;background-position:center top;
+ }
+}
