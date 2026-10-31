@@ -1,0 +1,42 @@
+/* v1.4.51: restore full-width backgrounds, correct jackpot and responsive layout. */
+html,body{min-width:0;max-width:100%;overflow-x:clip}
+body:has(.screen.active:not(#home)){background:#04142b!important}
+body:has(.screen.active:not(#home)) main{background:transparent!important;position:relative;isolation:isolate}
+/* Exactly one wallpaper, attached to the viewport rather than to a constrained content section. */
+body:has(.screen.active:not(#home)) main::before{content:""!important;display:block!important;position:absolute!important;inset:0!important;z-index:-3!important;pointer-events:none!important;background:linear-gradient(180deg,rgba(3,13,32,.48),rgba(3,13,32,.52)),url("hangry-neon-wallpaper-v1450.png") center top/auto,center top/ min(100vw,1100px) auto repeat-y!important}
+body:has(.screen.active:not(#home)) .screen.active{position:relative!important;background:transparent!important;isolation:isolate!important}
+body:has(.screen.active:not(#home)) .screen.active::before{content:none!important;display:none!important;background:none!important}
+/* Existing hero scene is allowed only on the wheel and winner; it fades into navy then wallpaper. */
+#wheel-screen.screen.active::after,#winner.screen.active::after{content:""!important;display:block!important;position:absolute!important;left:50%!important;right:auto!important;top:0!important;bottom:auto!important;width:100vw!important;height:clamp(440px,56vw,790px)!important;transform:translateX(-50%)!important;z-index:-1!important;pointer-events:none!important;background:linear-gradient(180deg,rgba(4,16,38,.05) 0%,rgba(4,16,38,.12) 42%,#04142b 82%,rgba(4,20,43,0) 100%),url("hangry-casino-wheel-v1442.webp") center top/cover no-repeat!important;mask-image:linear-gradient(#000 0%,#000 45%,transparent 100%)!important;-webkit-mask-image:linear-gradient(#000 0%,#000 45%,transparent 100%)!important}
+/* The previous update did not actually insert its image into the HTML. */
+#winner .jackpot-banner-v1451{display:block!important;width:100%!important;max-width:1050px!important;height:auto!important;max-height:none!important;object-fit:contain!important;margin:0 auto 14px!important;border-radius:12px}
+#winner .jackpot-ornament,#winner .winner-card>.eyebrow{display:none!important}
+#winner .winner-card{max-width:1150px!important;width:min(100%,1150px)!important;margin-inline:auto!important;overflow:hidden!important}
+#winner .winner-card h2#winner-name{overflow-wrap:anywhere}
+/* Responsive home: avoid desktop-sized fixed content, squashed graphics and horizontal overflow. */
+#home,#home .cinematic-home{width:100%!important;max-width:100%!important;min-width:0!important}
+#home img{max-width:100%;height:auto}
+@media(max-width:900px){
+ #home .home-hero{min-height:clamp(460px,75vw,720px)!important}
+ #home .home-hero .hero-copy{width:min(92%,680px)!important;padding:clamp(30px,6vw,60px) 5vw!important}
+ #home .home-hero h1{font-size:clamp(44px,9vw,86px)!important;white-space:normal!important}
+ #home .hero-actions{display:flex;flex-wrap:wrap;gap:12px}
+ #home .hero-actions button{max-width:100%;white-space:normal}
+ #home .home-cuisines img,#home .cuisine-panorama-crop img{max-width:none;width:100%;object-fit:cover}
+}
+@media(max-width:600px){
+ #home .home-hero{min-height:560px!important;align-items:flex-start!important;background-position:60% center!important}
+ #home .home-hero .hero-copy{width:100%!important;padding:32px 20px!important}
+ #home .home-hero h1{font-size:clamp(43px,11.5vw,66px)!important;line-height:1.02!important}
+ #home .home-hero .hero-actions{flex-direction:column;align-items:stretch}
+ #home .home-hero .hero-actions button{width:100%;font-size:clamp(13px,3.5vw,17px)!important}
+ #home .cinematic-home h2{font-size:clamp(24px,7vw,36px)!important;padding-inline:10px}
+ #home .home-modes,#home .mode-grid,#home .modes{grid-template-columns:1fr!important}
+ #home .home-modes>* ,#home .mode-grid>*{min-width:0!important;max-width:100%!important}
+ #home .cuisine-panorama-crop{max-width:100%;overflow:hidden}
+ #winner .jackpot-banner-v1451{border-radius:8px}
+ #winner .winner-card{padding:clamp(14px,4vw,24px)!important}
+ #wheel-screen.screen.active::after,#winner.screen.active::after{height:540px!important;background-position:center top,38% top!important}
+ .screen.active:not(#home){width:100%!important;max-width:100%!important;padding-inline:clamp(12px,4vw,22px)!important}
+ .screen.active:not(#home) .card,.screen.active:not(#home) .winner-card{max-width:100%!important}
+}
