@@ -5,7 +5,7 @@ chicken:'chicken',italian:'italian',chinese:'chinese',sushi:'sushi',japanese:'su
 steak:'steak',steakhouse:'steak',sandwich:'sandwich',sandwiches:'sandwich',
 salad:'salad',salads:'salad',healthy:'salad',indian:'indian',thai:'thai',
 breakfast:'breakfast',fast_food:'fast_food',seafood:'seafood',other:'other'};
-const file=k=>{const key=({asian:'chinese',healthy:'salad'})[k]||asset[k]||k||'other';return 'cuisine-'+key+(['coffee','dessert'].includes(key)?'-v1439.svg':'-v1441.png')};
+const file=k=>{const key=({asian:'chinese',healthy:'salad'})[k]||asset[k]||k||'other';return 'cuisine-'+key+(['coffee','dessert'].includes(key)?'-v1456.png':'-v1441.png')};
 function upgrade(){
  document.querySelectorAll('img').forEach(img=>{
   const m=(img.getAttribute('src')||'').match(/^cuisine-([a-z_]+)-v1439\.svg$/);
